@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/auth/signup
 exports.signupMerchant = async (req, res) => {
     try {
-        const { name, email, password, storeName } = req.body;
+        const { name, email, password, storeName, gstNumber } = req.body;
 
         // 1. Check if merchant already exists
         const merchantExists = await Merchant.findOne({ email });
