@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { signupMerchant } = require('../controllers/authController');
+const { signupMerchant} = require('../controllers/authController');
 
-// Route for merchant signup
+// Routes
 router.post('/signup', signupMerchant);
 
 module.exports = router;

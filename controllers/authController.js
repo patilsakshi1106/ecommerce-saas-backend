@@ -46,3 +46,37 @@ exports.signupMerchant = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
+// last bracket of signupMerchant function
+// starting of loginMerchant function
+exports.loginMerchant = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // 1. Check if merchant exists
+        const merchant = await Merchant.findOne({ email });
+        if (!merchant) {
+            return res.status(400).json({ success: false, message: 'Invalid Email or Password' });
+        }
+
+        // 2. Check if password matches (Compare encrypted password)
+        const isMatch = await bcrypt.compare(password, merchant.password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: 'Invalid Email or Password' });
+        }
+
+        // 3. Login Successful Response
+        res.status(200).json({
+            success: true,
+            message: 'Merchant logged in successfully! Welcome back 👋',
+            data: {
+                id: merchant._id,
+                name: merchant.name,
+                email: merchant.email,
+                storeName: merchant.storeName
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};
