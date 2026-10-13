@@ -18,7 +18,10 @@ exports.signupMerchant = async (req, res) => {
         if (storeExists) {
             return res.status(400).json({ success: false, message: 'Store name is already taken' });
         }
-
+        // NEW: validate GST number input specifically for the B2B side of the application. This is a placeholder for future implementation.
+        if (!gstNumber) {
+            return res.status(400).json({ success: false, message: 'GST number is mandatory for business onboarding' });
+        }
         // 3. Encrypt/Hash the password for security
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -28,7 +31,8 @@ exports.signupMerchant = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            storeName
+            storeName,
+            gstNumber
         });
 
         res.status(201).json({
@@ -38,7 +42,8 @@ exports.signupMerchant = async (req, res) => {
                 id: newMerchant._id,
                 name: newMerchant.name,
                 email: newMerchant.email,
-                storeName: newMerchant.storeName
+                storeName: newMerchant.storeName,
+                gstNumber: newMerchant.gstNumber
             }
         });
 
