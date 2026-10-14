@@ -4,7 +4,7 @@ const Product = require('../models/product');
 // @route   POST /api/products
 exports.createProduct = async (req, res) => {
     try {
-        const { merchantId, name, price, description, image, stock } = req.body;
+        const { merchantId, name, price, description, image, stock, category } = req.body;
 
         // Create product in Database
         const newProduct = await Product.create({
@@ -13,7 +13,8 @@ exports.createProduct = async (req, res) => {
             price,
             description,
             image,
-            stock
+            stock,
+            category
         });
 
         res.status(201).json({
@@ -28,9 +29,10 @@ exports.createProduct = async (req, res) => {
 };
 // @desc    Get all products
 // @route   GET /api/products
-exports.getProducts = async (req, res) => {
+// @note    this endpoint doesn't require a merchantId because any consumer can browse items
+exports.getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find();
+        const products = await Product.find().populate('merchantId', 'name storeName'); // Populate merchant details
 
         res.status(200).json({
             success: true,

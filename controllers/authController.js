@@ -1,6 +1,11 @@
+const jwt = require('jsonwebtoken');
 const Merchant = require('../models/merchant');
+const Customer = require('../models/customer');
 const bcrypt = require('bcryptjs');
-const Customer = require('../models/customer'); // 💡 Step 2 Import: Added Customer model
+
+// ==========================================
+// 🏢 B2B MERCHANT CONTROLLERS
+// ==========================================
 
 // @desc    Register a new Merchant (Sign-up)
 // @route   POST /api/auth/signup
@@ -20,7 +25,7 @@ exports.signupMerchant = async (req, res) => {
             return res.status(400).json({ success: false, message: "Store name is already taken" });
         }
 
-        // Validate GST Number input specifically for the B2B side
+        // 3. Validate GST Number input specifically for the B2B side
         if (!gstNumber) {
             return res.status(400).json({ success: false, message: "GST number is mandatory for business onboarding" });
         }
@@ -29,11 +34,11 @@ exports.signupMerchant = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please enter a valid 15-digit GST number" });
         }
 
-        // 3. Encrypt/Hash the password for security
+        // 4. Encrypt/Hash the password for security
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // 4. Create new merchant in Database
+        // 5. Create new merchant in Database
         const merchant = await Merchant.create({
             name,
             email,
@@ -73,16 +78,24 @@ exports.loginMerchant = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid email or password" });
         }
 
-        // 2. Check if password matches (Compare plaintext with encrypted password)
+        // 2. Check if password matches
         const isMatch = await bcrypt.compare(password, merchant.password);
         if (!isMatch) {
             return res.status(400).json({ success: false, message: "Invalid email or password" });
         }
 
-        // 3. Login Successful Response
+        // 3. Generate JWT token for Merchant
+        const token = jwt.sign(
+            { id: merchant._id, role: 'merchant' },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+        );
+
+        // 4. Login Successful Response
         res.status(200).json({
             success: true,
             message: "Merchant logged in successfully! Welcome back 👋",
+            token,
             data: {
                 _id: merchant._id,
                 name: merchant.name,
@@ -96,7 +109,10 @@ exports.loginMerchant = async (req, res) => {
     }
 };
 
-// 💡 NEW B2C CUSTOMER LOGIC ADDED HERE:
+// ==========================================
+// 🛍️ B2C CUSTOMER CONTROLLERS
+// ==========================================
+
 // @desc    Register a new Customer (B2C Sign-up)
 // @route   POST /api/auth/customer/signup
 exports.signupCustomer = async (req, res) => {
@@ -135,6 +151,7 @@ exports.signupCustomer = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error", error: error.message });
     }
 };
+
 // @desc    Login existing Customer (B2C Login)
 // @route   POST /api/auth/customer/login
 exports.loginCustomer = async (req, res) => {
@@ -153,10 +170,18 @@ exports.loginCustomer = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid email or password" });
         }
 
-        // 3. Return a successful customer profile overview response
+        // 3. Generate JWT token for Customer
+        const token = jwt.sign(
+            { id: customer._id, role: 'customer' },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+        );
+
+        // 4. Return successful login data along with the security token
         res.status(200).json({
             success: true,
             message: "Customer logged in successfully! Welcome back 👋",
+            token,
             data: {
                 _id: customer._id,
                 name: customer.name,

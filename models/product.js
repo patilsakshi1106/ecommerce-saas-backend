@@ -4,7 +4,7 @@ const productSchema = new mongoose.Schema({
     merchantId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Merchant',
-        required: true
+        required: [true, 'A product must belong to a verified merchant']
     },
     name: {
         type: String,
@@ -13,7 +13,8 @@ const productSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        required: [true, 'Please add a product price']
+        required: [true, 'Please add a product price'],
+        min: [0, 'Price cannot be negative']
     },
     description: {
         type: String,
@@ -27,6 +28,10 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please add product stock count'],
         default: 0
+    },
+    category: {
+        type: String,
+        required: [true, 'Please specify a product category']
     },
     createdAt: {
         type: Date,
