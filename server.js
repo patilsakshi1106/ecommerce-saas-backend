@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose'); // 1. Imported Mongoose library
@@ -10,6 +11,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'PUBLIC')));
 
 // Product Routes
 app.use('/api/products', productRoutes);
@@ -34,5 +36,5 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // 3. Basic Route
 app.get('/', (req, res) => {
-    res.send('My first e-commerce backend server has started successfully!');
+    res.sendFile(path.join(__dirname, 'PUBLIC', 'loginpage.html'));
 });

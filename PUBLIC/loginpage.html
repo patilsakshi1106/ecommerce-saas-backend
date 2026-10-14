@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full scroll-smooth">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KartaB2B — India's Wholesale & Retail Bridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="loginpage.js"></script>
+    <link rel="stylesheet" href="loginpage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+
+<body class="min-h-full bg-alabaster text-ink dark:bg-espresso dark:text-cream antialiased selection:bg-terracotta selection:text-white">
+
+    <!-- Toast Notifications -->
+    <div id="toast-box" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
+
+    <!-- =================================================================== -->
+    <!-- 1. TOP NAVIGATION & EXTERNAL CATEGORY BAR                           -->
+    <!-- =================================================================== -->
+    <header class="sticky top-0 z-40 bg-alabaster/95 dark:bg-espresso/95 backdrop-blur-md border-b theme-border">
+        <!-- Main Bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-ink dark:bg-cream text-alabaster dark:text-espresso flex items-center justify-center font-extrabold text-sm">KB</div>
+                <div>
+                    <span class="font-bold text-base tracking-tight block leading-none">KartaB2B</span>
+                    <span class="text-[11px] text-mutedLight dark:text-mutedDark">India Wholesale &amp; Retail Bridge</span>
+                </div>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-mutedLight dark:text-mutedDark">
+                <a href="#about-section" class="hover:text-ink dark:hover:text-cream transition">About Us</a>
+                <a href="#startup-guide" class="hover:text-ink dark:hover:text-cream transition">New to Business Guide</a>
+                <button onclick="app.toggleModal(true)" class="hover:text-ink dark:hover:text-cream transition flex items-center gap-1.5">
+                    <i class="fa-regular fa-images text-terracotta dark:text-terracotta-dark"></i> Photo Links
+                </button>
+            </nav>
+
+            <div class="flex items-center gap-2.5">
+                <button onclick="app.toggleTheme()" class="w-9 h-9 rounded-xl border theme-border bg-white dark:bg-surfaceDark flex items-center justify-center text-xs hover:border-terracotta transition" title="Toggle Light/Dark Theme">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <button id="nav-auth-btn" onclick="app.focusAuth('login')" class="px-4 py-2 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso text-xs font-bold hover:opacity-90 transition">
+                    Sign In
+                </button>
+            </div>
+        </div>
+
+        <!-- Secondary Category Bar (Opens External Category Pages) -->
+        <div class="border-t theme-border bg-white/60 dark:bg-surfaceDark/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-8 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-mutedLight dark:text-mutedDark mr-1 shrink-0">
+                    <i class="fa-solid fa-layer-group text-terracotta dark:text-terracotta-dark mr-1"></i>Categories:
+                </span>
+                <a href="./categories.html?category=apparel" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>Apparel &amp; Textiles</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+                <a href="./categories.html?category=footwear" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>Footwear &amp; Leather</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+                <a href="./categories.html?category=fmcg" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>FMCG &amp; Essentials</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+                <a href="./categories.html?category=home-kitchen" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>Home &amp; Kitchen</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+                <a href="./categories.html?category=packaging" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>Eco Packaging</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+                <a href="./categories.html?category=electronics" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta transition shrink-0 flex items-center gap-1.5 font-medium">
+                    <span>Electronics &amp; Accessories</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-mutedLight"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-16">
+
+        <!-- =================================================================== -->
+        <!-- 2. OPENING INTRO HERO SECTION                                       -->
+        <!-- =================================================================== -->
+        <section class="rounded-3xl bg-white dark:bg-surfaceDark border theme-border p-6 sm:p-10 lg:p-12 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div class="lg:col-span-7 space-y-5">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-alabaster dark:bg-espresso border theme-border text-xs font-semibold text-mutedLight dark:text-mutedDark">
+                    <span class="w-2 h-2 rounded-full bg-terracotta dark:bg-terracotta-dark"></span>
+                    Direct Factory-to-Retail &amp; Startup Supply Network
+                </div>
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15]">
+                    The Transparent Bridge Between <span class="text-terracotta dark:text-terracotta-dark">Indian Manufacturers</span> &amp; New Retailers.
+                </h1>
+                <p class="text-sm sm:text-base text-mutedLight dark:text-mutedDark leading-relaxed max-w-2xl">
+                    Whether you are a GST-registered wholesale manufacturer looking for nationwide buyers, or a first-time founder starting a retail shop from scratch, KartaB2B connects you directly without middleman markups.
+                </p>
+                <div class="flex flex-wrap items-center gap-3.5 pt-2">
+                    <button onclick="app.focusAuth('signup')" class="px-6 py-3.5 rounded-2xl bg-terracotta hover:opacity-95 text-white font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                        <span>Start for Free</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                    <a href="#about-section" class="px-6 py-3.5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border font-bold text-sm hover:border-terracotta transition flex items-center gap-2">
+                        <span>Know More</span>
+                        <i class="fa-solid fa-compass text-xs text-terracotta dark:text-terracotta-dark"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="relative rounded-2xl overflow-hidden border theme-border aspect-[4/3] bg-alabaster dark:bg-espresso group">
+                    <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1000&q=80" alt="Indian Apparel & Retail Supply" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+                    
+                    <div class="absolute bottom-4 left-4 right-4 text-white">
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-stone-300 block">Verified Trade Corridors</span>
+                        <p class="text-sm font-bold">100% GST-Verified Suppliers • Pan-India Direct Dispatch</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- 3. AUTHENTICATION PORTAL (B2B MERCHANT & B2C CUSTOMER)              -->
+        <!-- =================================================================== -->
+        <section id="auth-section" class="space-y-4">
+            <!-- Active Session Banner (Shown after Login/Signup) -->
+            <div id="session-banner" class="hidden p-5 rounded-2xl bg-sage/10 border border-sage/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-sage text-white flex items-center justify-center font-bold text-base">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 id="session-title" class="text-sm font-bold">Welcome back!</h3>
+                            <span id="session-role-badge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-sage text-white">B2B Merchant</span>
+                        </div>
+                        <p id="session-meta" class="text-xs text-mutedLight dark:text-mutedDark mt-0.5"></p>
+                    </div>
+                </div>
+                <button onclick="app.logout()" class="px-4 py-2 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso text-xs font-bold shrink-0">
+                    Sign Out
+                </button>
+            </div>
+
+            <!-- Split Auth Card -->
+            <div class="bg-white dark:bg-surfaceDark border theme-border rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12">
+                
+                <!-- Left Column: Editorial B2B Photo Slideshow -->
+                <div class="lg:col-span-5 relative min-h-[340px] lg:min-h-[520px] flex flex-col justify-between p-6 sm:p-8 text-white bg-espresso overflow-hidden">
+                    <img id="auth-slide-img" src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80" alt="B2B Wholesale Studio" class="absolute inset-0 w-full h-full object-cover transition-all duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25"></div>
+
+                    <div class="relative z-10 flex items-center justify-between gap-2">
+                        <span id="auth-slide-tag" class="px-3 py-1 rounded-full text-[11px] font-semibold bg-black/55 backdrop-blur-md border border-white/15">
+                            🏢 Verified B2B Supply
+                        </span>
+                        
+                    </div>
+
+                    <div class="relative z-10 space-y-3 pt-12">
+                        <span id="auth-slide-hub" class="text-[11px] font-mono uppercase tracking-wider text-stone-300 block">Surat • Mumbai • Tiruppur</span>
+                        <h3 id="auth-slide-heading" class="text-xl font-bold leading-snug">Direct Factory-to-Retail Sourcing</h3>
+                        <p id="auth-slide-caption" class="text-xs text-stone-300 leading-relaxed">
+                            Register your wholesale store with 15-digit GST verification or sign in as a retail customer.
+                        </p>
+                        <div class="flex items-center justify-between pt-2">
+                            <div id="auth-slide-dots" class="flex items-center gap-1.5"></div>
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="app.stepSlide(-1)" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-left"></i></button>
+                                <button type="button" onclick="app.stepSlide(1)" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Clean Production Form -->
+                <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
+                    <div class="space-y-5">
+                        
+                        <!-- Role Switcher: B2B Merchant vs B2C Customer -->
+                        <div class="grid grid-cols-2 p-1.5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border">
+                            <button type="button" id="tab-role-merchant" onclick="app.setRole('merchant')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-white dark:bg-surfaceDark shadow-sm">
+                                <i class="fa-solid fa-building text-terracotta dark:text-terracotta-dark"></i>
+                                <span>B2B Merchant</span>
+                            </button>
+                            <button type="button" id="tab-role-customer" onclick="app.setRole('customer')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-mutedLight dark:text-mutedDark">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                                <span>B2C Customer</span>
+                            </button>
+                        </div>
+
+                        <!-- Mode Switcher: Sign Up vs Log In -->
+                        <div class="flex items-center justify-between border-b theme-border pb-4">
+                            <div>
+                                <h2 id="auth-title" class="text-xl font-bold tracking-tight">B2B Merchant Sign Up</h2>
+                                <p id="auth-subtitle" class="text-xs text-mutedLight dark:text-mutedDark mt-0.5">Onboard your wholesale store with mandatory 15-digit GST verification.</p>
+                            </div>
+                            <div class="flex bg-alabaster dark:bg-espresso p-1 rounded-xl border theme-border shrink-0">
+                                <button type="button" id="tab-mode-signup" onclick="app.setMode('signup')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-surfaceDark shadow-sm transition">Sign Up</button>
+                                <button type="button" id="tab-mode-login" onclick="app.setMode('login')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-mutedLight dark:text-mutedDark transition">Log In</button>
+                            </div>
+                        </div>
+
+                        <!-- Inline Alert Message -->
+                        <div id="form-alert" class="hidden p-3.5 rounded-xl border text-xs font-medium"></div>
+
+                        <!-- Auth Form -->
+                        <form id="auth-form" onsubmit="app.handleSubmit(event)" class="space-y-4" novalidate>
+                            <!-- Full Name (Sign Up Only) -->
+                            <div id="field-name">
+                                <label class="text-xs font-semibold block mb-1.5">Full Name <span class="text-terracotta">*</span></label>
+                                <input type="text" id="in-name" placeholder="e.g. Aarav Mehta" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster dark:bg-espresso border theme-border text-xs focus:outline-none focus:border-terracotta">
+                            </div>
+
+                            <!-- Email Address -->
+                            <div>
+                                <label class="text-xs font-semibold block mb-1.5">Email Address <span class="text-terracotta">*</span></label>
+                                <input type="email" id="in-email" required placeholder="name@business.in" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster dark:bg-espresso border theme-border text-xs focus:outline-none focus:border-terracotta">
+                            </div>
+
+                            <!-- Merchant Only Fields: storeName & 15-digit gstNumber -->
+                            <div id="field-merchant-group" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-semibold block mb-1.5">Store / Business Name <span class="text-terracotta">*</span></label>
+                                    <input type="text" id="in-store" placeholder="Mehta Textiles Surat" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster dark:bg-espresso border theme-border text-xs focus:outline-none focus:border-terracotta">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <label class="text-xs font-semibold">15-Digit GSTIN <span class="text-terracotta">*</span></label>
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button" onclick="app.fillSampleGst()" class="text-[10px] font-semibold text-terracotta dark:text-terracotta-dark hover:underline">Sample GST</button>
+                                            <span id="gst-counter" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-alabaster dark:bg-espresso border theme-border text-mutedLight">0/15</span>
+                                        </div>
+                                    </div>
+                                    <input type="text" id="in-gst" maxlength="15" oninput="app.updateGstCounter(this.value)" placeholder="24AABCM1209R1Z5" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster dark:bg-espresso border theme-border text-xs font-mono uppercase focus:outline-none focus:border-terracotta">
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div>
+                                <label class="text-xs font-semibold block mb-1.5">Password <span class="text-terracotta">*</span></label>
+                                <input type="password" id="in-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster dark:bg-espresso border theme-border text-xs focus:outline-none focus:border-terracotta">
+                            </div>
+
+                            <button type="submit" id="submit-btn" class="w-full py-3.5 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso font-bold text-xs hover:opacity-95 transition flex items-center justify-center gap-2 shadow-sm">
+                                <span id="submit-label">Register Merchant Account</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="pt-4 mt-6 border-t theme-border flex items-center justify-between text-xs text-mutedLight dark:text-mutedDark">
+                        <span id="switch-prompt">Already registered?</span>
+                        <button type="button" onclick="app.setMode(app.mode === 'signup' ? 'login' : 'signup')" id="switch-link" class="font-bold text-terracotta dark:text-terracotta-dark hover:underline">
+                            Log in to your account &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- 4. FIXED SIDEWAYS SCROLLING LOOKBOOK (#lookbook-section)            -->
+        <!-- =================================================================== -->
+        <section id="lookbook-section" class="space-y-5">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-terracotta dark:text-terracotta-dark">Supply Chain Gallery</span>
+                    <h2 class="text-2xl font-bold tracking-tight">Indian Manufacturing &amp; Retail Lookbook</h2>
+                    
+                </div>
+
+                <!-- Horizontal Scroll Controls -->
+                <div class="flex items-center gap-2 self-start md:self-auto shrink-0">
+                    
+                    <button type="button" onclick="app.scrollLookbookBy(-340)" class="w-9 h-9 rounded-xl border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta flex items-center justify-center text-xs transition" title="Scroll Left">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button type="button" onclick="app.scrollLookbookBy(340)" class="w-9 h-9 rounded-xl border theme-border bg-white dark:bg-surfaceDark hover:border-terracotta flex items-center justify-center text-xs transition" title="Scroll Right">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Horizontal Scroll Viewport -->
+            <div id="lookbook-viewport" class="flex gap-5 overflow-x-auto no-scrollbar py-2 cursor-grab active:cursor-grabbing select-none" style="-webkit-overflow-scrolling: touch;">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Scroll Progress Bar & Hint -->
+            <div class="flex items-center justify-between gap-4 pt-1">
+                <div class="w-full h-1.5 rounded-full bg-borderLight dark:bg-borderDark overflow-hidden">
+                    <div id="lookbook-progress" class="h-full bg-terracotta dark:bg-terracotta-dark rounded-full transition-all duration-150" style="width: 18%;"></div>
+                </div>
+                <span id="lookbook-status" class="text-[11px] font-mono text-mutedLight dark:text-mutedDark shrink-0">Swipe / Drag Sideways &rarr;</span>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- 5. ABOUT US (LEFT) & ANIMATED INDIA TRADE MAP (RIGHT)               -->
+        <!-- =================================================================== -->
+        <section id="about-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-2">
+            
+            <!-- Left Column: About Us & Supply Chain Efficiency -->
+            <div class="lg:col-span-5 bg-white dark:bg-surfaceDark border theme-border rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-sm">
+                <div class="space-y-4">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-terracotta dark:text-terracotta-dark">About KartaB2B</span>
+                    <h2 class="text-2xl font-bold tracking-tight leading-snug">
+                        Eliminating Middlemen Between India's Production Hubs &amp; Local Shops
+                    </h2>
+                    <p class="text-xs sm:text-sm text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Traditional wholesale in India passes through 3 to 4 layers of regional brokers, inflating inventory costs by up to 30% and locking out new businesses with steep minimum order rules.
+                    </p>
+                    <p class="text-xs sm:text-sm text-mutedLight dark:text-mutedDark leading-relaxed">
+                        KartaB2B verifies manufacturers via mandatory 15-digit GST onboarding and connects them directly with independent retailers, D2C founders, and everyday buyers across India.
+                    </p>
+
+                    <!-- Supply Chain Efficiency Highlights -->
+                    <div class="space-y-3 pt-2">
+                        <div class="p-3.5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold block">Direct Factory Margin Saved</span>
+                                <span class="text-[11px] text-mutedLight dark:text-mutedDark">By bypassing regional wholesale agents</span>
+                            </div>
+                            <span class="text-lg font-extrabold font-mono text-sage">24% – 32%</span>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold block">15-Digit GST Verified Network</span>
+                                <span class="text-[11px] text-mutedLight dark:text-mutedDark">Authentic manufacturers &amp; tax-credit billing</span>
+                            </div>
+                            <span class="text-lg font-extrabold font-mono text-ink dark:text-cream">100% KYC</span>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold block">Pan-India Express Corridors</span>
+                                <span class="text-[11px] text-mutedLight dark:text-mutedDark">Direct cluster-to-storefront dispatch</span>
+                            </div>
+                            <span class="text-lg font-extrabold font-mono text-terracotta dark:text-terracotta-dark">24 – 72 Hrs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Map Hub Info Box -->
+                <div class="p-4 rounded-2xl bg-alabaster dark:bg-espresso border theme-border space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span id="hub-name" class="text-xs font-bold text-terracotta dark:text-terracotta-dark">Surat Textile &amp; Apparel Hub</span>
+                        <span id="hub-efficiency" class="text-[10px] font-mono px-2 py-0.5 rounded bg-sage/15 text-sage font-semibold">48h Dispatch</span>
+                    </div>
+                    <p id="hub-desc" class="text-xs text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Hover or click any glowing trade node on the India map to inspect regional cluster specialties and delivery efficiency.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Animated Interactive India Trade Map -->
+            <div class="lg:col-span-7 bg-white dark:bg-surfaceDark border theme-border rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold">Animated India Wholesale Trade Corridors</span>
+                        <p class="text-[11px] text-mutedLight dark:text-mutedDark">Hover or click any city hub to view specialization &amp; corridor efficiency</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-mono bg-alabaster dark:bg-espresso border theme-border flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-sage animate-pulse"></span> 8 Active Trade Clusters
+                    </span>
+                </div>
+
+                <!-- Interactive SVG Map of India -->
+                <div class="my-4 flex items-center justify-center relative min-h-[360px]">
+                    <svg viewBox="0 0 500 520" class="w-full max-w-[440px] h-auto select-none">
+                        <!-- Stylized India Border Silhouette -->
+                        <path d="M195,25 L235,32 L255,62 L245,95 L285,125 L345,140 L395,125 L435,145 L415,195 L370,210 L355,255 L310,305 L275,375 L245,465 L215,490 L195,445 L165,365 L135,285 L95,235 L75,195 L120,155 L145,105 L175,65 Z"
+                              class="fill-alabaster dark:fill-espresso stroke-borderLight dark:stroke-borderDark" stroke-width="2.5" stroke-linejoin="round" />
+
+                        <!-- Animated Dashed Trade Corridors -->
+                        <line x1="190" y1="110" x2="210" y2="145" class="stroke-terracotta/70 trade-corridor" stroke-width="1.8" />
+                        <line x1="210" y1="145" x2="175" y2="175" class="stroke-terracotta/70 trade-corridor" stroke-width="1.8" />
+                        <line x1="175" y1="175" x2="145" y2="235" class="stroke-terracotta/70 trade-corridor" stroke-width="1.8" />
+                        <line x1="145" y1="235" x2="155" y2="275" class="stroke-terracotta/70 trade-corridor" stroke-width="1.8" />
+                        <line x1="155" y1="275" x2="220" y2="390" class="stroke-sage/75 trade-corridor" stroke-width="1.8" />
+                        <line x1="220" y1="390" x2="215" y2="445" class="stroke-sage/75 trade-corridor" stroke-width="1.8" />
+                        <line x1="210" y1="145" x2="345" y2="235" class="stroke-terracotta/60 trade-corridor" stroke-width="1.6" />
+
+                        <!-- Moving Cargo Pulses -->
+                        <circle r="3.5" class="fill-terracotta dark:fill-terracotta-dark">
+                            <animateMotion dur="3.6s" repeatCount="indefinite" path="M190,110 L210,145 L175,175 L145,235 L155,275" />
+                        </circle>
+                        <circle r="3.5" class="fill-sage">
+                            <animateMotion dur="3.8s" repeatCount="indefinite" path="M155,275 L220,390 L215,445" />
+                        </circle>
+
+                        <!-- 8 Interactive Trade Hubs -->
+                        <!-- Ludhiana -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Ludhiana Knitwear & Woolens Hub', '36h North Dispatch', 'Specializes in winter knitwear, hosiery, and cotton-blend apparel manufacturing with direct factory pricing.')" onclick="app.showHub('Ludhiana Knitwear & Woolens Hub', '36h North Dispatch', 'Specializes in winter knitwear, hosiery, and cotton-blend apparel manufacturing with direct factory pricing.')">
+                            <circle cx="190" cy="110" r="11" class="fill-terracotta/25 hub-pulse" />
+                            <circle cx="190" cy="110" r="4.5" class="fill-terracotta dark:fill-terracotta-dark" />
+                            <text x="132" y="114" class="text-[10px] font-bold fill-ink dark:fill-cream">Ludhiana</text>
+                        </g>
+
+                        <!-- Delhi NCR -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Delhi NCR Wholesale & Electronics Hub', '24h Metro Dispatch', 'Central distribution node for electronics accessories, footwear, FMCG, and pan-India retail fulfillment.')" onclick="app.showHub('Delhi NCR Wholesale & Electronics Hub', '24h Metro Dispatch', 'Central distribution node for electronics accessories, footwear, FMCG, and pan-India retail fulfillment.')">
+                            <circle cx="210" cy="145" r="14" class="fill-terracotta/30 hub-pulse" />
+                            <circle cx="210" cy="145" r="5.5" class="fill-terracotta dark:fill-terracotta-dark" />
+                            <text x="222" y="149" class="text-[11px] font-bold fill-ink dark:fill-cream">Delhi NCR</text>
+                        </g>
+
+                        <!-- Jaipur -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Jaipur Home & Artisan Textiles Hub', '36h West/North Dispatch', 'Renowned for hand-block textiles, home & kitchen ceramics, and boutique handicrafts for modern retail stores.')" onclick="app.showHub('Jaipur Home & Artisan Textiles Hub', '36h West/North Dispatch', 'Renowned for hand-block textiles, home & kitchen ceramics, and boutique handicrafts for modern retail stores.')">
+                            <circle cx="175" cy="175" r="11" class="fill-sage/25 hub-pulse" />
+                            <circle cx="175" cy="175" r="4.5" class="fill-sage" />
+                            <text x="132" y="179" class="text-[10px] font-semibold fill-ink dark:fill-cream">Jaipur</text>
+                        </g>
+
+                        <!-- Surat -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Surat Textile & Woven Mill Cluster', '24h Western Corridor', 'India’s premier synthetic and cotton textile manufacturing hub cutting 28% off traditional broker rates.')" onclick="app.showHub('Surat Textile & Woven Mill Cluster', '24h Western Corridor', 'India’s premier synthetic and cotton textile manufacturing hub cutting 28% off traditional broker rates.')">
+                            <circle cx="145" cy="235" r="13" class="fill-terracotta/30 hub-pulse" />
+                            <circle cx="145" cy="235" r="5" class="fill-terracotta dark:fill-terracotta-dark" />
+                            <text x="102" y="239" class="text-[10px] font-bold fill-ink dark:fill-cream">Surat</text>
+                        </g>
+
+                        <!-- Mumbai -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Mumbai Commercial & FMCG Gateway', '24h Express Dispatch', 'High-volume B2B trade gateway connecting FMCG, eco-packaging, and retail lifestyle brands nationwide.')" onclick="app.showHub('Mumbai Commercial & FMCG Gateway', '24h Express Dispatch', 'High-volume B2B trade gateway connecting FMCG, eco-packaging, and retail lifestyle brands nationwide.')">
+                            <circle cx="155" cy="275" r="15" class="fill-terracotta/30 hub-pulse" />
+                            <circle cx="155" cy="275" r="6" class="fill-terracotta dark:fill-terracotta-dark" />
+                            <text x="98" y="279" class="text-[11px] font-bold fill-ink dark:fill-cream">Mumbai</text>
+                        </g>
+
+                        <!-- Kolkata -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Kolkata Leather & Jute Packaging Hub', '48h Eastern Corridor', 'Leading manufacturing center for leather goods, footwear, and sustainable biodegradable jute packaging.')" onclick="app.showHub('Kolkata Leather & Jute Packaging Hub', '48h Eastern Corridor', 'Leading manufacturing center for leather goods, footwear, and sustainable biodegradable jute packaging.')">
+                            <circle cx="345" cy="235" r="12" class="fill-sage/25 hub-pulse" />
+                            <circle cx="345" cy="235" r="5" class="fill-sage" />
+                            <text x="357" y="239" class="text-[10px] font-bold fill-ink dark:fill-cream">Kolkata</text>
+                        </g>
+
+                        <!-- Bengaluru -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Bengaluru D2C & Retail Distribution Hub', '24h Southern Hub', 'Connects modern D2C startups and southern retail chains directly to verified factory inventories.')" onclick="app.showHub('Bengaluru D2C & Retail Distribution Hub', '24h Southern Hub', 'Connects modern D2C startups and southern retail chains directly to verified factory inventories.')">
+                            <circle cx="220" cy="390" r="13" class="fill-sage/30 hub-pulse" />
+                            <circle cx="220" cy="390" r="5" class="fill-sage" />
+                            <text x="233" y="394" class="text-[11px] font-bold fill-ink dark:fill-cream">Bengaluru</text>
+                        </g>
+
+                        <!-- Tiruppur -->
+                        <g class="cursor-pointer" onmouseenter="app.showHub('Tiruppur Cotton Knitwear Capital', '36h Factory Dispatch', 'India’s largest organic cotton t-shirt, loungewear, and essentials manufacturing cluster for new clothing brands.')" onclick="app.showHub('Tiruppur Cotton Knitwear Capital', '36h Factory Dispatch', 'India’s largest organic cotton t-shirt, loungewear, and essentials manufacturing cluster for new clothing brands.')">
+                            <circle cx="215" cy="445" r="13" class="fill-terracotta/30 hub-pulse" />
+                            <circle cx="215" cy="445" r="5" class="fill-terracotta dark:fill-terracotta-dark" />
+                            <text x="228" y="449" class="text-[11px] font-bold fill-ink dark:fill-cream">Tiruppur</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 pt-3 border-t theme-border text-center text-xs">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-mutedLight dark:text-mutedDark block">Supplier Verification</span>
+                        <span class="font-bold">Mandatory 15-Digit GST</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-mutedLight dark:text-mutedDark block">Sourcing Model</span>
+                        <span class="font-bold text-terracotta dark:text-terracotta-dark">Zero Middlemen</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-mutedLight dark:text-mutedDark block">Buyer Support</span>
+                        <span class="font-bold text-sage">B2B &amp; B2C Ready</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- 6. "NEW TO BUSINESS" 4-STEP STARTUP GUIDE                           -->
+        <!-- =================================================================== -->
+        <section id="startup-guide" class="bg-white dark:bg-surfaceDark border theme-border rounded-3xl p-6 sm:p-10 shadow-sm space-y-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div class="max-w-2xl">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-terracotta dark:text-terracotta-dark">New to Business Guide</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1">Want to Start a Retail Brand, But Don't Know Where to Begin?</h2>
+                    <p class="text-xs sm:text-sm text-mutedLight dark:text-mutedDark mt-1">
+                        Follow our straightforward 4-step roadmap designed for first-time founders and new shop owners launching in India.
+                    </p>
+                </div>
+                <button onclick="app.focusAuth('signup')" class="px-5 py-3 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso text-xs font-bold shrink-0">
+                    Create Free Founder Account &rarr;
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="p-5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border space-y-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso font-mono text-xs font-bold flex items-center justify-center">01</span>
+                    <h3 class="text-sm font-bold">Niche &amp; Margin Selection</h3>
+                    <p class="text-xs text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Explore the external product categories in the top bar and shortlist high-margin Indian factories in Surat, Tiruppur, Jaipur, or Delhi NCR without broker commissions.
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border space-y-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-terracotta text-white font-mono text-xs font-bold flex items-center justify-center">02</span>
+                    <h3 class="text-sm font-bold">Low-MOQ Factory Sampling</h3>
+                    <p class="text-xs text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Avoid locking up heavy capital in deadstock. Order manageable initial sample batches as a B2C Customer to test product quality and local customer demand first.
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border space-y-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-sage text-white font-mono text-xs font-bold flex items-center justify-center">03</span>
+                    <h3 class="text-sm font-bold">GST &amp; Compliance Readiness</h3>
+                    <p class="text-xs text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Once your product line is validated, register with your 15-digit GSTIN as a B2B Merchant to unlock wholesale slab pricing and claim full input tax credits.
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-alabaster dark:bg-espresso border theme-border space-y-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-ink dark:bg-cream text-white dark:text-espresso font-mono text-xs font-bold flex items-center justify-center">04</span>
+                    <h3 class="text-sm font-bold">Scaling &amp; Reordering</h3>
+                    <p class="text-xs text-mutedLight dark:text-mutedDark leading-relaxed">
+                        Save 24%–32% on landed factory costs and reinvest those margins into custom packaging, fast restocks, and scaling your online or offline storefront.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- MODAL: LOCAL PHOTO LINKS FOR EASY COPY                              -->
+    <!-- =================================================================== -->
+    <div id="photo-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-surfaceDark border theme-border rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between border-b theme-border pb-3">
+                <div>
+                    <h3 class="text-sm font-bold">Direct Unsplash Photo Links for Local Setup</h3>
+                    <p class="text-[11px] text-mutedLight dark:text-mutedDark">Copy any URL below to use in your local project files.</p>
+                </div>
+                <button onclick="app.toggleModal(false)" class="w-8 h-8 rounded-full bg-alabaster dark:bg-espresso flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="modal-links-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+        </div>
+    </div>
+
+    <footer class="border-t theme-border mt-16 py-8 px-4 sm:px-8 text-xs text-mutedLight dark:text-mutedDark">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span><strong>KartaB2B</strong> &mdash; Minimal B2B &amp; B2C Wholesale Commerce Bridge.</span>
+            <div class="flex gap-5">
+                <a href="#about-section" class="hover:underline">About Us</a>
+                <a href="#startup-guide" class="hover:underline">New to Business Guide</a>
+                <button onclick="app.toggleModal(true)" class="hover:underline">Photo Links</button>
+            </div>
+        </div>
+    </footer>
+
+    
+</body>
+</html>

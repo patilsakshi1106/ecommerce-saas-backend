@@ -1,0 +1,40 @@
+body { 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    transition: background-color 0.25s, 
+    color 0.25s; 
+}
+
+.theme-border { 
+    border-color: #E7E2DA; 
+}
+
+.dark .theme-border { 
+    border-color: #33302C; 
+}
+
+.no-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+
+.no-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+@keyframes pulseNode {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.65); opacity: 0.15; }
+}
+.hub-pulse { 
+    animation: pulseNode 2.5s infinite ease-in-out; 
+    transform-origin: center; 
+}
+
+@keyframes corridorFlow { 
+    to { stroke-dashoffset: -24; } 
+}
+
+.trade-corridor { 
+    stroke-dasharray: 5 5; 
+    animation: corridorFlow 1.4s linear infinite; 
+}
