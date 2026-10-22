@@ -5,14 +5,14 @@ const Product = require('../models/product');
 exports.createProduct = async (req, res) => {
     try {
         const { merchantId, name, price, description, image, stock, category } = req.body;
-
+        const imageUrl = req.file ? req.file.path : 'https://placeholder.com'; // Use uploaded image or default placeholder
         // Create product in Database
         const newProduct = await Product.create({
             merchantId,
             name,
             price,
             description,
-            image,
+            image: imageUrl,
             stock,
             category
         });
