@@ -1,0 +1,148 @@
+
+@import "tailwindcss";
+
+
+/* ==========================================================================
+   1. MAISON QUIET-LUXURY DESIGN TOKENS & BASE STYLES (auth.css)
+   ========================================================================== */
+:root {
+  --maison-ivory: #FAF7F2;
+  --maison-cream: #F3EDE2;
+  --maison-surface: #FFFFFF;
+  --maison-charcoal: #1C1917;
+  --maison-taupe: #57524B;
+  --maison-muted: #8A8277;
+  --maison-gold: #B08D57;
+  --maison-terracotta: #9A5B3E;
+  --maison-olive: #2E4F3E;
+  --maison-border: #E5DEC9;
+  --maison-border-strong: #CEC4B0;
+  --maison-error: #B93829;
+}
+
+html.dark {
+  --maison-ivory: #141210;
+  --maison-cream: #1C1916;
+  --maison-surface: #211E1A;
+  --maison-charcoal: #F5F0E6;
+  --maison-taupe: #B8B0A4;
+  --maison-muted: #7D756B;
+  --maison-gold: #CDA76E;
+  --maison-terracotta: #C87D5B;
+  --maison-olive: #4B7F65;
+  --maison-border: #332E28;
+  --maison-border-strong: #4A433B;
+  --maison-error: #E05A47;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--maison-ivory);
+  color: var(--maison-charcoal);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-editorial {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Split-Screen Authentication Layout */
+.maison-auth-shell {
+  min-height: calc(100vh - 4.75rem);
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+}
+
+.maison-editorial-panel {
+  position: relative;
+  overflow: hidden;
+  background-color: #1C1917;
+  color: #FAF7F2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3.25rem;
+}
+
+.maison-form-panel {
+  display: flex;
+   flex-direction: column;
+  justify-content: center;
+  padding: 3rem 4rem;
+  background-color: var(--maison-ivory);
+}
+
+/* Inputs & Interactive Controls */
+.maison-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--maison-border);
+  background-color: var(--maison-surface);
+  color: var(--maison-charcoal);
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.maison-input:focus {
+  outline: none;
+  border-color: var(--maison-gold);
+  box-shadow: 0 0 0 3px rgba(176, 141, 87, 0.15);
+}
+
+.maison-input.input-error {
+  border-color: var(--maison-error);
+}
+
+/* Loading Spinner */
+@keyframes maisonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.maison-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 9999px;
+  animation: maisonSpin 0.7s linear infinite;
+}
+
+/* ==========================================================================
+   2. RESPONSIVE BREAKPOINTS (responsive.css)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .maison-auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .maison-editorial-panel {
+    min-height: 300px;
+    padding: 2.25rem 1.75rem;
+  }
+
+  .maison-form-panel {
+    padding: 2.25rem 1.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .maison-editorial-panel {
+    min-height: 250px;
+    padding: 1.75rem 1.25rem;
+  }
+
+  .maison-form-panel {
+    padding: 1.75rem 1.25rem;
+  }
+}
