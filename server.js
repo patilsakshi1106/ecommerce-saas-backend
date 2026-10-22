@@ -14,10 +14,6 @@ const app = express();
 // 💡 2. Middlewares
 app.use(cors());
 app.use(express.json());
-
-// 💡 3. Connect the Capital 'PUBLIC' folder safely for frontend static files
-app.use(express.static(path.join(__dirname, 'PUBLIC')));
-
 // 💡 4. Auth & Functional API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

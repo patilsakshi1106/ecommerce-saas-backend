@@ -40,5 +40,4 @@ const merchantSchema = new mongoose.Schema({
         default: Date.now
     }
 });
-
 module.exports = mongoose.model('Merchant', merchantSchema);
