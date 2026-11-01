@@ -11,10 +11,11 @@ const cartRoutes = require('./routes/cartRoutes');
 
 const app = express();
 
-// 💡 2. Middlewares
+// Middlewares
 app.use(cors());
 app.use(express.json());
-// 💡 4. Auth & Functional API Routes
+
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);

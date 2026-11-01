@@ -20,6 +20,12 @@ const merchantSchema = new mongoose.Schema({
         required: [true, 'Please add a password'],
         minlength: [6, 'Password must be at least 6 characters long']
     },
+    resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpires: {
+    type: Date
+  },
     storeName: {
         type: String,
         required: [true, 'Please add your store name'],

@@ -9,6 +9,7 @@ export default function ShoppingRegister({
   onNavigateLogin,
   sharedDraft,
   setSharedDraft,
+  onNavigateHome,
 }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -131,8 +132,14 @@ export default function ShoppingRegister({
               <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9A5B3E] dark:text-[#C87D5B]">
                 Account Onboarding • Step 1 of 1
               </span>
-              <h2 className="font-editorial text-4xl font-semibold mt-0.5">
-                Create Your Shopper Account
+              <h2 
+                
+               onClick={onNavigateHome} 
+               style={{ cursor: 'pointer' }} 
+               className="font-editorial text-4xl font-semibold mt-0.5"
+>
+               MAISON
+
               </h2>
             </div>
             <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-[#9A5B3E]/15 text-[#9A5B3E] dark:text-[#C87D5B]">

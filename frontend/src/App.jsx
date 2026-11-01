@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import IntroLogin from './pages/IntroLogin.jsx';
 import ShoppingRegister from './pages/ShoppingRegister.jsx';
 import BusinessRegister from './pages/BusinessRegister.jsx';
-
+import Home from './Home.jsx';
 // Configure your Express backend URL (leave empty if using a Vite proxy, or set to 'http://localhost:5000')
 const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
 
@@ -178,14 +178,14 @@ export const authService = {
 /* ==========================================================================
    SHARED AUTH NAVBAR COMPONENT (AuthNavbar.jsx)
    ========================================================================== */
-export function AuthNavbar({ currentPage, selectedRole, onNavigateLogin, onSelectRole, darkMode, onToggleDark }) {
+export function AuthNavbar({ currentPage, selectedRole, onNavigateLogin, onNavigateHome, onSelectRole, darkMode, onToggleDark }) {
   return (
     <header className="sticky top-0 z-50 h-[4.75rem] bg-[#FAF7F2]/95 dark:bg-[#141210]/95 backdrop-blur-md border-b border-[#E5DEC9] dark:border-[#332E28]">
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-8 flex items-center justify-between gap-4">
         {/* MAISON Brand Identity */}
         <button
           type="button"
-          onClick={onNavigateLogin}
+          onClick={onNavigateHome}
           className="flex items-center gap-3 text-left group focus:outline-none"
         >
           <div className="w-10 h-10 rounded-full bg-[#1C1917] text-[#FAF7F2] dark:bg-[#F5F0E6] dark:text-[#141210] flex items-center justify-center font-editorial text-xl font-semibold tracking-widest">
@@ -314,7 +314,7 @@ export function RoleSelector({ selectedRole, onChangeRole }) {
    ========================================================================== */
 export default function App() {
   // 'login' | 'shopping-register' | 'business-register'
-  const [currentPage, setCurrentPage] = useState('login');
+  const [currentPage, setCurrentPage] = useState('home');
   // 'shopper' | 'startup' | 'retailer' | 'merchant'
   const [selectedRole, setSelectedRole] = useState('shopper');
   // Preserve common fields if a user switches between Shopper and Business roles during registration
@@ -350,21 +350,38 @@ export default function App() {
     setCurrentPage('login');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+  const handleNavigateHome = () => {
+  setCurrentPage('home');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#1C1917] dark:bg-[#141210] dark:text-[#F5F0E6]">
       <AuthNavbar
         currentPage={currentPage}
         selectedRole={selectedRole}
         onNavigateLogin={handleNavigateLogin}
+        onNavigateHome={handleNavigateHome}
         onSelectRole={handleSelectRoleAndNavigate}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
       />
 
       <main className="flex-1">
+        {currentPage === 'home' && (
+  <Home
+    onLogin={handleNavigateLogin}
+    onCustomerRegister={() =>
+      handleSelectRoleAndNavigate('shopper')
+    }
+    onMerchantRegister={() =>
+      handleSelectRoleAndNavigate('merchant')
+    }
+    onShop={() => handleSelectRoleAndNavigate('shopper')}
+  />
+)}
         {currentPage === 'login' && (
-          <IntroLogin
+          <IntroLogin 
+           onNavigateHome={() => setCurrentPage('home')} 
             onStartShopping={() => handleSelectRoleAndNavigate('shopper')}
             onStartBusiness={(defaultBizRole = 'startup') =>
               handleSelectRoleAndNavigate(defaultBizRole)
@@ -372,9 +389,10 @@ export default function App() {
             onSelectRole={handleSelectRoleAndNavigate}
           />
         )}
-
+      
         {currentPage === 'shopping-register' && (
           <ShoppingRegister
+            onNavigateHome={() => setCurrentPage('home')}
             selectedRole={selectedRole}
             onChangeRole={handleSelectRoleAndNavigate}
             onNavigateLogin={handleNavigateLogin}
@@ -385,6 +403,7 @@ export default function App() {
 
         {currentPage === 'business-register' && (
           <BusinessRegister
+            onNavigateHome={() => setCurrentPage('home')}
             selectedRole={selectedRole === 'shopper' ? 'startup' : selectedRole}
             onChangeRole={handleSelectRoleAndNavigate}
             onNavigateLogin={handleNavigateLogin}

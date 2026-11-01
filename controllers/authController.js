@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const Merchant = require('../models/merchant');
 const Customer = require('../models/customer');
 const bcrypt = require('bcryptjs');
-
+const nodemailer = require('nodemailer');
 // ==========================================
 // 🏢 B2B MERCHANT CONTROLLERS
 // ==========================================
@@ -191,5 +192,76 @@ exports.loginCustomer = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    }
+};
+// Password Recovery Controller for both Merchants and Customers
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // 1. Check if a merchant exists with this email
+        let user = await Merchant.findOne({ email });
+        let userType = 'merchant';
+
+        // 2. If not a merchant, check if a customer exists
+        if (!user) {
+            user = await Customer.findOne({ email });
+            userType = 'customer';
+        }
+
+        // 3. If the email doesn't match any user or merchant
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "No account found with this email address."
+            });
+        }
+
+        // 4. Generate a random reset token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // 5. Save hashed token and expiry to DB
+        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+        await user.save();
+
+        // 6. Create the dynamic reset URL pointing to your frontend based on user role
+        const resetUrl = `http://localhost:5173/reset-password/${resetToken}?role=${userType}`;
+
+        // TEMPORARY: Log it to your terminal so you can click it!
+        console.log("==========================================");
+        console.log(`PASSWORD RESET LINK INDEED GENERATED FOR ${userType.toUpperCase()}:`);
+        console.log(resetUrl);
+        console.log("==========================================");
+        // 1. Create email transporter using Gmail service
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, // 👈 Replace with your real Gmail address
+        pass: process.env.EMAIL_PASS // 👈 Use an App Password for Gmail
+    }
+});
+// 2. Define email structure and options
+const mailOptions = {
+    from: process.env.EMAIL_USER,     // 👈 Replace with your real Gmail address
+    to: user.email,                   // Dynamically sends to the user/merchant who requested the reset
+    subject: 'Password Reset Request',
+    text: `You requested a password reset. Please click on the link below to reset your password:\n\n${resetUrl}`
+};
+
+// 3. Trigger the asynchronous email delivery
+await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+            success: true,
+            message: `Password reset link sent to your email. (${userType} account)`
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Server Error",
+            error: error.message
+        });
     }
 };
