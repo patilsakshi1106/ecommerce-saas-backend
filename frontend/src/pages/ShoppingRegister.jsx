@@ -1,40 +1,30 @@
 import React, { useState } from 'react';
-import { RoleSelector, authService } from '../App.jsx';
+import { authService } from '../App.jsx';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function ShoppingRegister({
-  selectedRole,
-  onChangeRole,
-  onNavigateLogin,
-  sharedDraft,
-  setSharedDraft,
-  onNavigateHome,
-}) {
+export default function ShoppingRegister({ onOpenShopperLogin, onOpenBusinessRegister }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
-  const [registeredData, setRegisteredData] = useState(null);
+  const [registeredShopper, setRegisteredShopper] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateDraftField = (key, value) => {
-    setSharedDraft((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
-  };
-
-  const validateShopperForm = () => {
+  const validateShopper = () => {
     const nextErrors = {};
-    if (!sharedDraft.name.trim()) {
+    if (!name.trim()) {
       nextErrors.name = 'Full name is required.';
     }
-    if (!sharedDraft.email.trim()) {
+    if (!email.trim()) {
       nextErrors.email = 'Email address is required.';
-    } else if (!EMAIL_REGEX.test(sharedDraft.email.trim())) {
+    } else if (!EMAIL_REGEX.test(email.trim())) {
       nextErrors.email = 'Please enter a valid email address.';
     }
     if (!password) {
@@ -42,13 +32,11 @@ export default function ShoppingRegister({
     } else if (password.length < 6) {
       nextErrors.password = 'Password must be at least 6 characters.';
     }
-    if (!confirmPassword) {
-      nextErrors.confirmPassword = 'Please confirm your password.';
-    } else if (password !== confirmPassword) {
+    if (password !== confirmPassword) {
       nextErrors.confirmPassword = 'Passwords do not match.';
     }
     if (!acceptedTerms) {
-      nextErrors.acceptedTerms = 'You must accept the MAISON Terms & Conditions.';
+      nextErrors.acceptedTerms = 'You must accept the Terms & Conditions.';
     }
 
     setErrors(nextErrors);
@@ -58,19 +46,20 @@ export default function ShoppingRegister({
   const handleShopperSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
-    setRegisteredData(null);
+    setRegisteredShopper(null);
 
-    if (!validateShopperForm()) return;
+    if (!validateShopper()) return;
 
     setIsSubmitting(true);
     try {
       const response = await authService.registerShopper({
-        name: sharedDraft.name,
-        email: sharedDraft.email,
+        name,
+        email,
+        phone,
         password,
       });
 
-      setRegisteredData(response);
+      setRegisteredShopper(response);
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
@@ -85,72 +74,63 @@ export default function ShoppingRegister({
   };
 
   return (
-    <div className="maison-auth-shell">
-      {/* LEFT PANEL: B2C SHOPPER EDITORIAL SHOWCASE */}
-      <aside className="maison-editorial-panel">
-        <img
-          src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"
-          alt="MAISON Personal Shopping Curation"
-          className="absolute inset-0 w-full h-full object-cover opacity-35"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141210] via-[#141210]/70 to-[#141210]/30" />
+    <div className="py-12 lg:py-16 max-w-6xl mx-auto px-4 sm:px-8">
+      <div className="rounded-3xl overflow-hidden border border-[#E5DEC9] dark:border-[#2E2A25] bg-white dark:bg-[#1F1C19] shadow-lg grid lg:grid-cols-12">
+        {/* Left Multi-Category Shopper Welcome Panel */}
+        <aside className="lg:col-span-5 bg-[#181615] text-[#FAF7F2] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1000&q=80"
+            alt="MAISON Multi-Category Shopping"
+            className="absolute inset-0 w-full h-full object-cover opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#11100F] via-[#11100F]/80 to-transparent" />
 
-        <div className="relative z-10">
-          <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-semibold tracking-[0.2em] uppercase border border-[#9A5B3E] text-[#FAF7F2] bg-[#9A5B3E]/40 backdrop-blur-sm">
-            Personal Account • Shopper (B2C)
-          </span>
-          <h1 className="font-editorial text-4xl sm:text-5xl font-medium leading-[1.1] mt-5 text-[#FAF7F2]">
-            Curated Indian Craftsmanship, Delivered to Your Door.
-          </h1>
-          <p className="text-sm text-[#E5DEC9]/85 mt-4 max-w-md leading-relaxed">
-            Create a personal MAISON Shopper account to explore limited-edition collections directly from independent Indian ateliers and flagship boutiques.
-          </p>
-        </div>
-
-        <div className="relative z-10 mt-10 p-5 rounded-2xl bg-black/40 border border-[#E5DEC9]/20 backdrop-blur-md">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#CDA76E]">
-            Looking to Sell or Buy Wholesale Instead?
+          <div className="relative z-10">
+            <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] border border-[#B89456]/50 text-[#CDA76E]">
+              MAISON Personal Account
+            </span>
+            <h1 className="font-editorial text-4xl sm:text-5xl font-medium mt-4 leading-tight">
+              One Account for Every Department.
+            </h1>
+            <p className="text-xs sm:text-sm text-[#E5DEC9]/80 mt-3 leading-relaxed">
+              Create your complimentary MAISON Shopper profile to explore electronics, home appliances, living décor, beauty, fashion, jewellery, groceries, and lifestyle essentials.
+            </p>
           </div>
-          <p className="text-xs text-[#E5DEC9]/80 mt-1 mb-3">
-            Switch to a Startup, Retailer, or Merchant account to unlock GST-verified wholesale trade and catalogue tools.
-          </p>
-          <button
-            type="button"
-            onClick={() => onChangeRole('startup')}
-            className="text-xs font-semibold uppercase tracking-wider text-white underline underline-offset-4 hover:text-[#CDA76E]"
-          >
-            Switch to Business Registration →
-          </button>
-        </div>
-      </aside>
 
-      {/* RIGHT PANEL: REGISTRATION FORM WITH 4-ROLE SELECTOR */}
-      <section className="maison-form-panel">
-        <div className="max-w-xl w-full mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
+          <div className="relative z-10 mt-10 pt-6 border-t border-white/15 text-xs space-y-2">
+            <span className="block text-[#CDA76E] uppercase tracking-wider font-semibold">
+              Want to sell on MAISON instead?
+            </span>
+            <button
+              type="button"
+              onClick={onOpenBusinessRegister}
+              className="text-white underline underline-offset-4 hover:text-[#CDA76E] font-semibold"
+            >
+              Go to Business Registration (Merchant, Retailer &amp; Startup) →
+            </button>
+          </div>
+        </aside>
+
+        {/* Right Shopper Registration Form */}
+        <section className="lg:col-span-7 p-8 sm:p-12">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9A5B3E] dark:text-[#C87D5B]">
-                Account Onboarding • Step 1 of 1
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B89456] dark:text-[#CDA76E]">
+                Shopper Onboarding
               </span>
-              <h2 
-                
-               onClick={onNavigateHome} 
-               style={{ cursor: 'pointer' }} 
-               className="font-editorial text-4xl font-semibold mt-0.5"
->
-               MAISON
-
+              <h2 className="font-editorial text-3xl sm:text-4xl font-semibold mt-0.5">
+                Shopper Registration
               </h2>
             </div>
-            <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-[#9A5B3E]/15 text-[#9A5B3E] dark:text-[#C87D5B]">
-              Regular Shopping Account
-            </span>
+            <button
+              type="button"
+              onClick={onOpenShopperLogin}
+              className="text-xs font-semibold uppercase tracking-wider text-[#B89456] dark:text-[#CDA76E] hover:underline"
+            >
+              Existing Shopper? Login →
+            </button>
           </div>
 
-          {/* 4-Account Type Selector (Shopper, Startup, Retailer, Merchant) */}
-          <RoleSelector selectedRole={selectedRole} onChangeRole={onChangeRole} />
-
-          {/* Backend Error Banner */}
           {serverError && (
             <div
               role="alert"
@@ -163,44 +143,40 @@ export default function ShoppingRegister({
             </div>
           )}
 
-          {/* Real Backend Registration Success Banner */}
-          {registeredData && (
+          {registeredShopper && (
             <div
               role="status"
-              className="mb-5 p-4 rounded-xl bg-[#2E4F3E]/15 border border-[#2E4F3E] text-xs"
+              className="mb-5 p-5 rounded-2xl bg-[#285943]/15 border border-[#285943] text-xs space-y-2"
             >
-              <strong className="block font-semibold text-[#2E4F3E] dark:text-[#68A688] uppercase tracking-wider mb-1">
-                ✓ {registeredData.message}
+              <strong className="block font-semibold text-[#285943] dark:text-[#68A688] uppercase tracking-wider">
+                ✓ {registeredShopper.message}
               </strong>
-              <p className="text-[#57524B] dark:text-[#B8B0A4] mb-2">
-                Account created for <strong>{registeredData.data?.name}</strong> (
-                {registeredData.data?.email}).
+              <p className="text-[#5C564F] dark:text-[#A8A096]">
+                Welcome to MAISON, <strong>{registeredShopper.data?.name}</strong> (
+                {registeredShopper.data?.email}). Your shopper account is ready.
               </p>
               <button
                 type="button"
-                onClick={onNavigateLogin}
-                className="px-4 py-1.5 rounded-full bg-[#1C1917] text-[#FAF7F2] dark:bg-[#F5F0E6] dark:text-[#141210] text-[11px] font-semibold uppercase tracking-wider"
+                onClick={onOpenShopperLogin}
+                className="mt-2 px-5 py-2 rounded-full bg-[#181615] text-white dark:bg-[#B89456] dark:text-[#11100F] text-xs font-semibold uppercase tracking-wider"
               >
-                Proceed to Sign In →
+                Proceed to Shopper Login →
               </button>
             </div>
           )}
 
           <form onSubmit={handleShopperSubmit} noValidate className="space-y-4">
-            {/* Full Name */}
             <div>
-              <label
-                htmlFor="shopper-name"
-                className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-              >
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
                 Full Name *
               </label>
               <input
-                id="shopper-name"
                 type="text"
-                autoComplete="name"
-                value={sharedDraft.name}
-                onChange={(e) => updateDraftField('name', e.target.value)}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors({ ...errors, name: '' });
+                }}
                 placeholder="e.g. Ananya Sharma"
                 className={`maison-input ${errors.name ? 'input-error' : ''}`}
               />
@@ -209,42 +185,48 @@ export default function ShoppingRegister({
               )}
             </div>
 
-            {/* Email Address */}
-            <div>
-              <label
-                htmlFor="shopper-email"
-                className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-              >
-                Email Address *
-              </label>
-              <input
-                id="shopper-email"
-                type="email"
-                autoComplete="email"
-                value={sharedDraft.email}
-                onChange={(e) => updateDraftField('email', e.target.value)}
-                placeholder="ananya@example.com"
-                className={`maison-input ${errors.email ? 'input-error' : ''}`}
-              />
-              {errors.email && (
-                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password & Confirm Password Grid */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="shopper-password"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                  Email / Gmail Address *
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors({ ...errors, email: '' });
+                  }}
+                  placeholder="you@gmail.com"
+                  className={`maison-input ${errors.email ? 'input-error' : ''}`}
+                />
+                {errors.email && (
+                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                  Phone Number (Optional)
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className="maison-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
                   Password *
                 </label>
                 <div className="relative">
                   <input
-                    id="shopper-password"
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -256,7 +238,7 @@ export default function ShoppingRegister({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#57524B] dark:text-[#B8B0A4]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#5C564F]"
                   >
                     {showPassword ? 'Hide' : 'Show'}
                   </button>
@@ -269,36 +251,20 @@ export default function ShoppingRegister({
               </div>
 
               <div>
-                <label
-                  htmlFor="shopper-confirm-password"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
                   Confirm Password *
                 </label>
-                <div className="relative">
-                  <input
-                    id="shopper-confirm-password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword)
-                        setErrors({ ...errors, confirmPassword: '' });
-                    }}
-                    placeholder="Re-enter password"
-                    className={`maison-input pr-14 ${
-                      errors.confirmPassword ? 'input-error' : ''
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#57524B] dark:text-[#B8B0A4]"
-                  >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword)
+                      setErrors({ ...errors, confirmPassword: '' });
+                  }}
+                  placeholder="Re-enter password"
+                  className={`maison-input ${errors.confirmPassword ? 'input-error' : ''}`}
+                />
                 {errors.confirmPassword && (
                   <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
                     {errors.confirmPassword}
@@ -307,29 +273,27 @@ export default function ShoppingRegister({
               </div>
             </div>
 
-            {/* Terms and Conditions Checkbox */}
             <div className="pt-1">
-              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#57524B] dark:text-[#B8B0A4]">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#5C564F] dark:text-[#A8A096]">
                 <input
                   type="checkbox"
                   checked={acceptedTerms}
                   onChange={(e) => {
                     setAcceptedTerms(e.target.checked);
-                    if (errors.acceptedTerms)
-                      setErrors({ ...errors, acceptedTerms: '' });
+                    if (errors.acceptedTerms) setErrors({ ...errors, acceptedTerms: '' });
                   }}
-                  className="mt-0.5 h-4 w-4 rounded border-[#CEC4B0] text-[#9A5B3E] focus:ring-[#9A5B3E]"
+                  className="mt-0.5 h-4 w-4 rounded border-[#D0C6B0]"
                 />
                 <span>
                   I agree to MAISON’s{' '}
-                  <strong className="text-[#1C1917] dark:text-[#F5F0E6]">
-                    Terms of Service
+                  <strong className="text-[#181615] dark:text-[#F5F2EB]">
+                    Terms &amp; Conditions
                   </strong>{' '}
                   and{' '}
-                  <strong className="text-[#1C1917] dark:text-[#F5F0E6]">
+                  <strong className="text-[#181615] dark:text-[#F5F2EB]">
                     Privacy Policy
-                  </strong>{' '}
-                  for personal shopping accounts.
+                  </strong>
+                  .
                 </span>
               </label>
               {errors.acceptedTerms && (
@@ -339,11 +303,10 @@ export default function ShoppingRegister({
               )}
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 px-6 rounded-full bg-[#9A5B3E] hover:bg-[#7F482F] text-white text-xs font-semibold uppercase tracking-[0.14em] disabled:opacity-60 transition flex items-center justify-center gap-2.5 mt-2"
+              className="w-full py-4 px-6 rounded-full bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F] text-xs font-semibold uppercase tracking-[0.16em] hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2 mt-2"
             >
               {isSubmitting && <span className="maison-spinner" />}
               <span>
@@ -352,18 +315,18 @@ export default function ShoppingRegister({
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-[#E5DEC9] dark:border-[#332E28] flex items-center justify-between text-xs text-[#57524B] dark:text-[#B8B0A4]">
-            <span>Already have a MAISON account?</span>
+          <div className="mt-6 pt-5 border-t border-[#E5DEC9] dark:border-[#2E2A25] flex items-center justify-between text-xs text-[#5C564F] dark:text-[#A8A096]">
+            <span>Already have a MAISON shopper account?</span>
             <button
               type="button"
-              onClick={onNavigateLogin}
-              className="font-semibold text-[#1C1917] dark:text-[#F5F0E6] hover:underline"
+              onClick={onOpenShopperLogin}
+              className="font-semibold text-[#B89456] dark:text-[#CDA76E] hover:underline"
             >
-              Sign In Here →
+              Access Shopper Login →
             </button>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

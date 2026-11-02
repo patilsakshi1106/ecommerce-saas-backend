@@ -1,137 +1,148 @@
-import React, { useState } from 'react';
-import { RoleSelector, ROLE_DEFINITIONS, authService } from '../App.jsx';
+import React, { useState, useEffect } from 'react';
+import { authService } from '../App.jsx';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const BUSINESS_CATEGORIES = [
-  'Apparel, Silk & Heritage Textiles',
-  'Fine Leather & Handcrafted Footwear',
-  'Architectural Ceramics & Home Decor',
-  'Botanical Apothecary & Personal Care',
-  'Bespoke Rigid & Sustainable Packaging',
-  'Multi-Category Concept / Department Store',
+const MARKETPLACE_DEPARTMENTS = [
+  'Electronics & Technology',
+  'Fashion & Apparel',
+  'Jewellery & Accessories',
+  'Home & Living',
+  'Beauty & Personal Care',
+  'Appliances',
+  'Grocery & Essentials',
+  'Sports & Fitness',
+  'Toys & Hobbies',
+  'Multi-Category / General Store',
 ];
 
-const ROLE_SPECIFIC_CONFIG = {
-  startup: {
-    heading: 'Register Your Startup Brand',
-    badge: 'Startup Onboarding • Low-MOQ Trade Access',
-    storeLabel: 'Startup / Brand Name *',
-    storePlaceholder: 'e.g. Studio Aranya',
-    detailLabel: 'Current Brand Stage *',
-    detailOptions: [
-      'Pre-Launch / Sampling Stage',
-      'Early D2C Brand (< 1 Year)',
-      'Scaling Independent Label (1–3 Years)',
-    ],
+const BUSINESS_REGISTRATION_CHOICES = [
+  {
+    id: 'merchant',
+    title: 'MERCHANT REGISTRATION',
+    subtitle: 'For merchants who want to sell their products through MAISON.',
+    badge: 'Catalogue Seller & Manufacturer',
   },
-  retailer: {
-    heading: 'Register Your Retail Business',
-    badge: 'Retailer Onboarding • Wholesale Buyer Desk',
-    storeLabel: 'Retail Store / Boutique Name *',
-    storePlaceholder: 'e.g. The Courtyard Edit',
-    detailLabel: 'Retail Format & Sourcing Volume *',
-    detailOptions: [
-      'Single Flagship Boutique (₹1L–₹5L / mo)',
-      'Multi-Store Retail Chain (₹5L+ / mo)',
-      'Online Multi-Brand Marketplace',
-    ],
+  {
+    id: 'retailer',
+    title: 'RETAILER REGISTRATION',
+    subtitle: 'For retailers who want to join the marketplace and grow their business.',
+    badge: 'Wholesale & Retail Storefront',
   },
-  merchant: {
-    heading: 'Register as a Supply Merchant',
-    badge: 'Merchant Onboarding • Catalogue & Wholesale Supplier',
-    storeLabel: 'Merchant / Manufacturing House Name *',
-    storePlaceholder: 'e.g. Zari & Loom Heritage Mills',
-    detailLabel: 'Primary Supply Type & Minimum Order (MOQ) *',
-    detailOptions: [
-      'Artisanal Craft Studio (MOQ 10–25 Units)',
-      'OEM / Private-Label Manufacturer (MOQ 50+ Units)',
-      'Authorized Regional Wholesale Distributor',
-    ],
+  {
+    id: 'startup',
+    title: 'STARTUP / ONLINE SELLER REGISTRATION',
+    subtitle: 'For entrepreneurs and startups who want to establish their online selling business.',
+    badge: 'Emerging Brand & D2C Seller',
   },
-};
+];
 
 export default function BusinessRegister({
-  selectedRole,
-  onChangeRole,
-  onNavigateLogin,
-  sharedDraft,
-  setSharedDraft,
+  initialRole = 'merchant',
+  onOpenBusinessLogin,
+  onOpenShopperRegister,
 }) {
-  const activeRoleKey = ['startup', 'retailer', 'merchant'].includes(selectedRole)
-    ? selectedRole
-    : 'startup';
-  const roleConfig = ROLE_SPECIFIC_CONFIG[activeRoleKey];
-  const roleMeta = ROLE_DEFINITIONS[activeRoleKey];
+  const [selectedChoice, setSelectedChoice] = useState(initialRole);
 
-  const [storeName, setStoreName] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [businessCategory, setBusinessCategory] = useState(BUSINESS_CATEGORIES[0]);
-  const [location, setLocation] = useState('');
-  const [roleSpecificDetail, setRoleSpecificDetail] = useState(
-    roleConfig.detailOptions[0]
-  );
+  useEffect(() => {
+    if (['merchant', 'retailer', 'startup'].includes(initialRole)) {
+      setSelectedChoice(initialRole);
+    }
+  }, [initialRole]);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Separate form state for each of the 3 distinct business forms
+  const [merchantForm, setMerchantForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    storeName: '',
+    gstNumber: '',
+    businessCategory: MARKETPLACE_DEPARTMENTS[0],
+    location: '',
+    catalogueSize: '50–250 SKUs',
+    password: '',
+    confirmPassword: '',
+    acceptedTerms: false,
+  });
+
+  const [retailerForm, setRetailerForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    storeName: '',
+    gstNumber: '',
+    businessCategory: MARKETPLACE_DEPARTMENTS[0],
+    location: '',
+    retailFormat: 'Physical + Online Storefront',
+    password: '',
+    confirmPassword: '',
+    acceptedTerms: false,
+  });
+
+  const [startupForm, setStartupForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    storeName: '',
+    gstNumber: '',
+    businessCategory: MARKETPLACE_DEPARTMENTS[0],
+    location: '',
+    launchStage: 'Early-Stage Online Seller (< 1 Year)',
+    password: '',
+    confirmPassword: '',
+    acceptedTerms: false,
+  });
+
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
-  const [registeredData, setRegisteredData] = useState(null);
+  const [registeredSuccess, setRegisteredSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRoleSwitch = (newRole) => {
-    if (ROLE_SPECIFIC_CONFIG[newRole]) {
-      setRoleSpecificDetail(ROLE_SPECIFIC_CONFIG[newRole].detailOptions[0]);
-    }
-    setErrors({});
-    setServerError('');
-    onChangeRole(newRole);
+  const getActiveFormState = () => {
+    if (selectedChoice === 'merchant') return [merchantForm, setMerchantForm];
+    if (selectedChoice === 'retailer') return [retailerForm, setRetailerForm];
+    return [startupForm, setStartupForm];
   };
 
-  const updateDraftField = (key, value) => {
-    setSharedDraft((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
+  const [activeForm, setActiveForm] = getActiveFormState();
+
+  const updateField = (field, value) => {
+    setActiveForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const validateBusinessForm = () => {
+  const validateActiveForm = () => {
     const nextErrors = {};
-
-    if (!sharedDraft.name.trim()) {
-      nextErrors.name = 'Authorized contact / founder name is required.';
+    if (!activeForm.name.trim()) {
+      nextErrors.name = 'Full name / authorized representative name is required.';
     }
-    if (!sharedDraft.email.trim()) {
+    if (!activeForm.email.trim()) {
       nextErrors.email = 'Business email address is required.';
-    } else if (!EMAIL_REGEX.test(sharedDraft.email.trim())) {
-      nextErrors.email = 'Please enter a valid business email address.';
+    } else if (!EMAIL_REGEX.test(activeForm.email.trim())) {
+      nextErrors.email = 'Please enter a valid email address.';
     }
-    if (!storeName.trim()) {
-      nextErrors.storeName = 'Business or store name is required.';
+    if (!activeForm.storeName.trim()) {
+      nextErrors.storeName = 'Business / store name is required.';
     }
-    if (!gstNumber.trim()) {
+    if (!activeForm.gstNumber.trim()) {
       nextErrors.gstNumber = 'GST number is mandatory for business onboarding.';
-    } else if (gstNumber.trim().length !== 15) {
+    } else if (activeForm.gstNumber.trim().length !== 15) {
       nextErrors.gstNumber = 'Please enter a valid 15-digit GST number.';
     }
-    if (!location.trim()) {
-      nextErrors.location = 'City / trade hub location is required.';
+    if (!activeForm.location.trim()) {
+      nextErrors.location = 'City / business location is required.';
     }
-    if (!password) {
+    if (!activeForm.password) {
       nextErrors.password = 'Password is required.';
-    } else if (password.length < 6) {
+    } else if (activeForm.password.length < 6) {
       nextErrors.password = 'Password must be at least 6 characters.';
     }
-    if (!confirmPassword) {
-      nextErrors.confirmPassword = 'Please confirm your password.';
-    } else if (password !== confirmPassword) {
+    if (activeForm.password !== activeForm.confirmPassword) {
       nextErrors.confirmPassword = 'Passwords do not match.';
     }
-    if (!acceptedTerms) {
-      nextErrors.acceptedTerms =
-        'You must accept the MAISON B2B Trade & Commercial Terms.';
+    if (!activeForm.acceptedTerms) {
+      nextErrors.acceptedTerms = 'Please accept the MAISON Business Partner Terms.';
     }
 
     setErrors(nextErrors);
@@ -141,31 +152,35 @@ export default function BusinessRegister({
   const handleBusinessSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
-    setRegisteredData(null);
+    setRegisteredSuccess(null);
 
-    if (!validateBusinessForm()) return;
+    if (!validateActiveForm()) return;
 
     setIsSubmitting(true);
     try {
       const response = await authService.registerBusiness({
-        role: activeRoleKey,
-        name: sharedDraft.name,
-        email: sharedDraft.email,
-        password,
-        storeName,
-        gstNumber,
-        businessCategory,
-        location,
-        roleSpecificDetail,
+        role: selectedChoice,
+        name: activeForm.name,
+        email: activeForm.email,
+        phone: activeForm.phone,
+        password: activeForm.password,
+        storeName: activeForm.storeName,
+        gstNumber: activeForm.gstNumber,
+        businessCategory: activeForm.businessCategory,
+        location: activeForm.location,
+        businessDetails:
+          activeForm.catalogueSize || activeForm.retailFormat || activeForm.launchStage,
       });
 
-      setRegisteredData(response);
-      setPassword('');
-      setConfirmPassword('');
+      setRegisteredSuccess({
+        role: selectedChoice,
+        message: response.message,
+        data: response.data,
+      });
     } catch (err) {
       setServerError(
         err.message === 'Failed to fetch'
-          ? 'Could not reach POST /api/auth/signup. Please verify your Express server is running.'
+          ? 'Could not connect to POST /api/auth/signup. Please verify your Express server is running.'
           : err.message
       );
     } finally {
@@ -174,423 +189,442 @@ export default function BusinessRegister({
   };
 
   return (
-    <div className="maison-auth-shell">
-      {/* LEFT PANEL: B2B & TRADE EDITORIAL SHOWCASE */}
-      <aside className="maison-editorial-panel">
-        <img
-          src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1200&q=85"
-          alt="MAISON B2B Trade & Textile Atelier"
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141210] via-[#141210]/75 to-[#141210]/40" />
+    <div className="py-12 lg:py-16 max-w-7xl mx-auto px-4 sm:px-8">
+      {/* Header */}
+      <div className="text-center max-w-3xl mx-auto mb-10">
+        <span className="inline-block px-3.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.2em] bg-[#F2ECE1] dark:bg-[#1F1C19] border border-[#D0C6B0] dark:border-[#423C35] text-[#B89456] dark:text-[#CDA76E]">
+          MAISON Commercial Partner Onboarding
+        </span>
+        <h1 className="font-editorial text-4xl sm:text-5xl font-semibold mt-3">
+          Business Registration
+        </h1>
+        <p className="text-sm sm:text-base text-[#5C564F] dark:text-[#A8A096] mt-2">
+          Select your business category below. Once registered, all Merchants, Retailers, and Startups sign in through our single unified <strong>Business Login</strong>.
+        </p>
+      </div>
 
-        <div className="relative z-10">
-          <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-semibold tracking-[0.2em] uppercase border border-[#CDA76E]/50 text-[#CDA76E] bg-[#2E4F3E]/50 backdrop-blur-sm">
-            {roleConfig.badge}
-          </span>
-          <h1 className="font-editorial text-4xl sm:text-5xl font-medium leading-[1.1] mt-5 text-[#FAF7F2]">
-            Built for India’s Next Generation of Brands, Retailers &amp; Craft Houses.
-          </h1>
-          <p className="text-sm text-[#E5DEC9]/85 mt-4 max-w-md leading-relaxed">
-            {roleMeta.tagline} Every business account is verified with a 15-character GSTIN to maintain a trusted, direct-from-source trade network.
-          </p>
-        </div>
-
-        <div className="relative z-10 mt-10 p-5 rounded-2xl bg-black/45 border border-[#E5DEC9]/20 backdrop-blur-md space-y-2 text-xs text-[#E5DEC9]/85">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#CDA76E]">
-            Security &amp; Verification Notice
-          </div>
-          <p>
-            • Wholesale pricing tiers and catalogue management permissions are verified and enforced by the backend upon sign-in.
-          </p>
-          <button
-            type="button"
-            onClick={() => handleRoleSwitch('shopper')}
-            className="inline-block pt-1 font-semibold uppercase tracking-wider text-white underline underline-offset-4 hover:text-[#CDA76E]"
-          >
-            Looking for Personal Shopping Instead? Switch to Shopper →
-          </button>
-        </div>
-      </aside>
-
-      {/* RIGHT PANEL: BUSINESS REGISTRATION FORM */}
-      <section className="maison-form-panel">
-        <div className="max-w-xl w-full mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2E4F3E] dark:text-[#68A688]">
-                Commercial Trade Onboarding • GST Verified
-              </span>
-              <h2 className="font-editorial text-4xl font-semibold mt-0.5">
-                {roleConfig.heading}
-              </h2>
-            </div>
-            <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-[#2E4F3E]/15 text-[#2E4F3E] dark:text-[#68A688]">
-              B2B / Commercial Account
-            </span>
-          </div>
-
-          {/* 4-Account Type Selector */}
-          <RoleSelector selectedRole={activeRoleKey} onChangeRole={handleRoleSwitch} />
-
-          {/* Backend Error Message */}
-          {serverError && (
-            <div
-              role="alert"
-              className="mb-5 p-4 rounded-xl bg-[#B93829]/10 border border-[#B93829] text-xs text-[#B93829] dark:text-[#E05A47]"
+      {/* Three Clearly Differentiated Business Registration Choices */}
+      <div className="grid md:grid-cols-3 gap-5 mb-10">
+        {BUSINESS_REGISTRATION_CHOICES.map((choice) => {
+          const isSelected = selectedChoice === choice.id;
+          return (
+            <button
+              key={choice.id}
+              type="button"
+              onClick={() => {
+                setSelectedChoice(choice.id);
+                setErrors({});
+                setServerError('');
+                setRegisteredSuccess(null);
+              }}
+              className={`p-6 rounded-3xl border text-left transition-all flex flex-col justify-between ${
+                isSelected
+                  ? 'bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F] border-[#B89456] shadow-md'
+                  : 'bg-white dark:bg-[#1F1C19] border-[#E5DEC9] dark:border-[#2E2A25] hover:border-[#B89456]'
+              }`}
             >
-              <strong className="block font-semibold uppercase tracking-wider mb-0.5">
-                Business Onboarding Error
-              </strong>
-              {serverError}
-            </div>
-          )}
-
-          {/* Real Backend Success Message */}
-          {registeredData && (
-            <div
-              role="status"
-              className="mb-5 p-4 rounded-xl bg-[#2E4F3E]/15 border border-[#2E4F3E] text-xs"
-            >
-              <strong className="block font-semibold text-[#2E4F3E] dark:text-[#68A688] uppercase tracking-wider mb-1">
-                ✓ {registeredData.message}
-              </strong>
-              <p className="text-[#57524B] dark:text-[#B8B0A4] mb-2">
-                Registered <strong>{registeredData.data?.storeName}</strong> (GSTIN:{' '}
-                <span className="font-mono-code">{registeredData.data?.gstNumber}</span>) for{' '}
-                {registeredData.data?.email}.
-              </p>
-              <button
-                type="button"
-                onClick={onNavigateLogin}
-                className="px-4 py-1.5 rounded-full bg-[#1C1917] text-[#FAF7F2] dark:bg-[#F5F0E6] dark:text-[#141210] text-[11px] font-semibold uppercase tracking-wider"
-              >
-                Proceed to Business Sign In →
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleBusinessSubmit} noValidate className="space-y-4">
-            {/* Row 1: Full Name & Business Email */}
-            <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="biz-name"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Full Name (Founder / Contact) *
-                </label>
-                <input
-                  id="biz-name"
-                  type="text"
-                  value={sharedDraft.name}
-                  onChange={(e) => updateDraftField('name', e.target.value)}
-                  placeholder="e.g. Vikramaditya Rao"
-                  className={`maison-input ${errors.name ? 'input-error' : ''}`}
-                />
-                {errors.name && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.name}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="biz-email"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Business Email Address *
-                </label>
-                <input
-                  id="biz-email"
-                  type="email"
-                  value={sharedDraft.email}
-                  onChange={(e) => updateDraftField('email', e.target.value)}
-                  placeholder="founder@atelier.in"
-                  className={`maison-input ${errors.email ? 'input-error' : ''}`}
-                />
-                {errors.email && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Row 2: Business/Store Name & 15-Digit GSTIN */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="biz-store"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  {roleConfig.storeLabel}
-                </label>
-                <input
-                  id="biz-store"
-                  type="text"
-                  value={storeName}
-                  onChange={(e) => {
-                    setStoreName(e.target.value);
-                    if (errors.storeName) setErrors({ ...errors, storeName: '' });
-                  }}
-                  placeholder={roleConfig.storePlaceholder}
-                  className={`maison-input ${errors.storeName ? 'input-error' : ''}`}
-                />
-                {errors.storeName && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.storeName}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label
-                    htmlFor="biz-gst"
-                    className="text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4]"
-                  >
-                    15-Digit GSTIN *
-                  </label>
+                <div className="flex items-center justify-between gap-2 mb-3">
                   <span
-                    className={`font-mono-code text-[11px] ${
-                      gstNumber.trim().length === 15
-                        ? 'text-[#2E4F3E] dark:text-[#68A688] font-semibold'
-                        : 'text-[#8A8277]'
+                    className={`text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                      isSelected
+                        ? 'bg-white/15 text-[#CDA76E] dark:bg-black/15 dark:text-[#11100F]'
+                        : 'bg-[#F2ECE1] dark:bg-[#2A2622] text-[#B89456]'
                     }`}
                   >
-                    {gstNumber.trim().length} / 15
+                    {choice.badge}
                   </span>
+                  <span className="text-xs font-bold">{isSelected ? '✓ Active' : 'Select →'}</span>
                 </div>
+                <h2 className="font-editorial text-2xl font-semibold tracking-wide">
+                  {choice.title}
+                </h2>
+                <p
+                  className={`text-xs mt-2 leading-relaxed ${
+                    isSelected
+                      ? 'text-[#E5DEC9] dark:text-[#181615]/80'
+                      : 'text-[#5C564F] dark:text-[#A8A096]'
+                  }`}
+                >
+                  {choice.subtitle}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected Business Registration Form Container */}
+      <div className="max-w-3xl mx-auto p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#1F1C19] border border-[#E5DEC9] dark:border-[#2E2A25] shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-6 border-b border-[#E5DEC9] dark:border-[#2E2A25]">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B89456] dark:text-[#CDA76E]">
+              Active Registration Form
+            </span>
+            <h3 className="font-editorial text-3xl font-semibold mt-0.5">
+              {selectedChoice === 'merchant' && 'Merchant Registration Form'}
+              {selectedChoice === 'retailer' && 'Retailer Registration Form'}
+              {selectedChoice === 'startup' && 'Startup / Online Seller Registration Form'}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenBusinessLogin}
+            className="text-xs font-semibold uppercase tracking-wider text-[#B89456] dark:text-[#CDA76E] hover:underline"
+          >
+            Already registered? Business Login →
+          </button>
+        </div>
+
+        {serverError && (
+          <div
+            role="alert"
+            className="mb-6 p-4 rounded-xl bg-[#B93829]/10 border border-[#B93829] text-xs text-[#B93829] dark:text-[#E05A47]"
+          >
+            <strong className="block font-semibold uppercase tracking-wider mb-0.5">
+              Registration Error
+            </strong>
+            {serverError}
+          </div>
+        )}
+
+        {registeredSuccess && (
+          <div
+            role="status"
+            className="mb-6 p-5 rounded-2xl bg-[#285943]/15 border border-[#285943] text-xs space-y-2"
+          >
+            <strong className="block font-semibold text-[#285943] dark:text-[#68A688] uppercase tracking-wider">
+              ✓ {registeredSuccess.message}
+            </strong>
+            <p className="text-[#5C564F] dark:text-[#A8A096]">
+              Your <strong>{registeredSuccess.role.toUpperCase()}</strong> account for{' '}
+              <strong>{registeredSuccess.data?.storeName}</strong> (GSTIN:{' '}
+              <span className="font-mono-code">{registeredSuccess.data?.gstNumber}</span>) has been created. You can now sign in using the unified Business Login page.
+            </p>
+            <button
+              type="button"
+              onClick={onOpenBusinessLogin}
+              className="mt-2 px-5 py-2.5 rounded-full bg-[#181615] text-white dark:bg-[#B89456] dark:text-[#11100F] text-xs font-semibold uppercase tracking-wider"
+            >
+              Proceed to Business Login →
+            </button>
+          </div>
+        )}
+
+        {/* Dedicated Form for Merchant / Retailer / Startup */}
+        <form onSubmit={handleBusinessSubmit} noValidate className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                {selectedChoice === 'merchant'
+                  ? 'Merchant Representative Name *'
+                  : selectedChoice === 'retailer'
+                  ? 'Retail Owner / Buyer Name *'
+                  : 'Founder / Seller Full Name *'}
+              </label>
+              <input
+                type="text"
+                value={activeForm.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                placeholder="e.g. Vikramaditya Rao"
+                className={`maison-input ${errors.name ? 'input-error' : ''}`}
+              />
+              {errors.name && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Business Email / Gmail *
+              </label>
+              <input
+                type="email"
+                value={activeForm.email}
+                onChange={(e) => updateField('email', e.target.value)}
+                placeholder="partner@company.com"
+                className={`maison-input ${errors.email ? 'input-error' : ''}`}
+              />
+              {errors.email && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">{errors.email}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                {selectedChoice === 'merchant'
+                  ? 'Merchant Store / Brand Name *'
+                  : selectedChoice === 'retailer'
+                  ? 'Retail Store / Enterprise Name *'
+                  : 'Startup / Online Store Name *'}
+              </label>
+              <input
+                type="text"
+                value={activeForm.storeName}
+                onChange={(e) => updateField('storeName', e.target.value)}
+                placeholder="Unique Store or Business Name"
+                className={`maison-input ${errors.storeName ? 'input-error' : ''}`}
+              />
+              {errors.storeName && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
+                  {errors.storeName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096]">
+                  15-Digit GST Number *
+                </label>
+                <span className="font-mono-code text-[11px] text-[#B89456]">
+                  {activeForm.gstNumber.trim().length} / 15
+                </span>
+              </div>
+              <div className="flex gap-2">
                 <input
-                  id="biz-gst"
                   type="text"
                   maxLength={15}
-                  value={gstNumber}
-                  onChange={(e) => {
-                    setGstNumber(e.target.value.toUpperCase());
-                    if (errors.gstNumber) setErrors({ ...errors, gstNumber: '' });
-                  }}
+                  value={activeForm.gstNumber}
+                  onChange={(e) => updateField('gstNumber', e.target.value.toUpperCase())}
                   placeholder="27AABCU9603R1ZM"
                   className={`maison-input font-mono-code uppercase ${
                     errors.gstNumber ? 'input-error' : ''
                   }`}
                 />
-                {errors.gstNumber && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.gstNumber}
-                  </p>
-                )}
+                <button
+                  type="button"
+                  onClick={() => updateField('gstNumber', '27AABCU9603R1ZM')}
+                  className="px-3 py-2 rounded-xl border border-[#D0C6B0] dark:border-[#423C35] text-[11px] font-semibold shrink-0 hover:border-[#B89456]"
+                >
+                  Sample GST
+                </button>
               </div>
+              {errors.gstNumber && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
+                  {errors.gstNumber}
+                </p>
+              )}
             </div>
+          </div>
 
-            {/* Row 3: Business Category & City/Location */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="biz-category"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Business Category *
-                </label>
-                <select
-                  id="biz-category"
-                  value={businessCategory}
-                  onChange={(e) => setBusinessCategory(e.target.value)}
-                  className="maison-input"
-                >
-                  {BUSINESS_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="biz-location"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Primary City / Hub Location *
-                </label>
-                <input
-                  id="biz-location"
-                  type="text"
-                  value={location}
-                  onChange={(e) => {
-                    setLocation(e.target.value);
-                    if (errors.location) setErrors({ ...errors, location: '' });
-                  }}
-                  placeholder="e.g. Mumbai, Jaipur, Surat, Bengaluru"
-                  className={`maison-input ${errors.location ? 'input-error' : ''}`}
-                />
-                {errors.location && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.location}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Row 4: Dynamic Role-Specific Field (Startup vs Retailer vs Merchant) */}
+          <div className="grid sm:grid-cols-3 gap-4">
             <div>
-              <label
-                htmlFor="biz-role-detail"
-                className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-              >
-                {roleConfig.detailLabel}
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Primary Product Category *
               </label>
               <select
-                id="biz-role-detail"
-                value={roleSpecificDetail}
-                onChange={(e) => setRoleSpecificDetail(e.target.value)}
+                value={activeForm.businessCategory}
+                onChange={(e) => updateField('businessCategory', e.target.value)}
                 className="maison-input"
               >
-                {roleConfig.detailOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                {MARKETPLACE_DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Row 5: Password & Confirm Password */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="biz-password"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Password *
-                </label>
-                <div className="relative">
-                  <input
-                    id="biz-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errors.password) setErrors({ ...errors, password: '' });
-                    }}
-                    placeholder="Min. 6 characters"
-                    className={`maison-input pr-14 ${errors.password ? 'input-error' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#57524B] dark:text-[#B8B0A4]"
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="biz-confirm-password"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[#57524B] dark:text-[#B8B0A4] mb-1.5"
-                >
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <input
-                    id="biz-confirm-password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword)
-                        setErrors({ ...errors, confirmPassword: '' });
-                    }}
-                    placeholder="Re-enter password"
-                    className={`maison-input pr-14 ${
-                      errors.confirmPassword ? 'input-error' : ''
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#57524B] dark:text-[#B8B0A4]"
-                  >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Terms & Conditions Checkbox */}
-            <div className="pt-1">
-              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#57524B] dark:text-[#B8B0A4]">
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => {
-                    setAcceptedTerms(e.target.checked);
-                    if (errors.acceptedTerms)
-                      setErrors({ ...errors, acceptedTerms: '' });
-                  }}
-                  className="mt-0.5 h-4 w-4 rounded border-[#CEC4B0] text-[#2E4F3E] focus:ring-[#2E4F3E]"
-                />
-                <span>
-                  I confirm that our GSTIN details are accurate and agree to MAISON’s{' '}
-                  <strong className="text-[#1C1917] dark:text-[#F5F0E6]">
-                    Commercial B2B Terms
-                  </strong>{' '}
-                  and{' '}
-                  <strong className="text-[#1C1917] dark:text-[#F5F0E6]">
-                    Merchant Code of Conduct
-                  </strong>
-                  .
-                </span>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                City &amp; State *
               </label>
-              {errors.acceptedTerms && (
+              <input
+                type="text"
+                value={activeForm.location}
+                onChange={(e) => updateField('location', e.target.value)}
+                placeholder="e.g. Mumbai, Maharashtra"
+                className={`maison-input ${errors.location ? 'input-error' : ''}`}
+              />
+              {errors.location && (
                 <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
-                  {errors.acceptedTerms}
+                  {errors.location}
                 </p>
               )}
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 px-6 rounded-full bg-[#2E4F3E] hover:opacity-95 text-white text-xs font-semibold uppercase tracking-[0.14em] disabled:opacity-60 transition flex items-center justify-center gap-2.5 mt-2"
-            >
-              {isSubmitting && <span className="maison-spinner" />}
-              <span>
-                {isSubmitting
-                  ? `Registering ${roleMeta.label} Account...`
-                  : `Complete ${roleMeta.label} Registration`}
-              </span>
-            </button>
-          </form>
-
-          <div className="mt-6 pt-5 border-t border-[#E5DEC9] dark:border-[#332E28] flex items-center justify-between text-xs text-[#57524B] dark:text-[#B8B0A4]">
-            <span>Already onboarded your business?</span>
-            <button
-              type="button"
-              onClick={onNavigateLogin}
-              className="font-semibold text-[#1C1917] dark:text-[#F5F0E6] hover:underline"
-            >
-              Sign In to Business Portal →
-            </button>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                value={activeForm.phone}
+                onChange={(e) => updateField('phone', e.target.value)}
+                placeholder="+91 98765 43210"
+                className="maison-input"
+              />
+            </div>
           </div>
+
+          {/* Role-Specific Field Preserved Separately per Form */}
+          {selectedChoice === 'merchant' && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Merchant Catalogue Capacity &amp; Supply Type
+              </label>
+              <select
+                value={activeForm.catalogueSize}
+                onChange={(e) => updateField('catalogueSize', e.target.value)}
+                className="maison-input"
+              >
+                <option value="10–50 SKUs (Boutique / Direct Brand)">
+                  10–50 SKUs (Boutique / Direct Brand)
+                </option>
+                <option value="50–250 SKUs (Commercial Manufacturer)">
+                  50–250 SKUs (Commercial Manufacturer)
+                </option>
+                <option value="250+ SKUs (Full-Scale Distributor)">
+                  250+ SKUs (Full-Scale Distributor)
+                </option>
+              </select>
+            </div>
+          )}
+
+          {selectedChoice === 'retailer' && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Retailer Store Format &amp; Monthly Sourcing Volume
+              </label>
+              <select
+                value={activeForm.retailFormat}
+                onChange={(e) => updateField('retailFormat', e.target.value)}
+                className="maison-input"
+              >
+                <option value="Physical Retail Storefront">Physical Retail Storefront</option>
+                <option value="Multi-Store Retail Chain">Multi-Store Retail Chain</option>
+                <option value="Physical + Online Storefront">Physical + Online Storefront</option>
+              </select>
+            </div>
+          )}
+
+          {selectedChoice === 'startup' && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Startup / Online Seller Stage
+              </label>
+              <select
+                value={activeForm.launchStage}
+                onChange={(e) => updateField('launchStage', e.target.value)}
+                className="maison-input"
+              >
+                <option value="New Online Seller (Pre-Launch / Setup)">
+                  New Online Seller (Pre-Launch / Setup)
+                </option>
+                <option value="Early-Stage Online Seller (< 1 Year)">
+                  Early-Stage Online Seller (&lt; 1 Year)
+                </option>
+                <option value="Growing D2C Startup (1–3 Years)">
+                  Growing D2C Startup (1–3 Years)
+                </option>
+              </select>
+            </div>
+          )}
+
+          {/* Password & Confirm Password */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Password *
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={activeForm.password}
+                  onChange={(e) => updateField('password', e.target.value)}
+                  placeholder="Min. 6 characters"
+                  className={`maison-input pr-14 ${errors.password ? 'input-error' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase text-[#5C564F]"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
+                  {errors.password}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5C564F] dark:text-[#A8A096] mb-1.5">
+                Confirm Password *
+              </label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={activeForm.confirmPassword}
+                onChange={(e) => updateField('confirmPassword', e.target.value)}
+                placeholder="Re-enter password"
+                className={`maison-input ${errors.confirmPassword ? 'input-error' : ''}`}
+              />
+              {errors.confirmPassword && (
+                <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Terms Acceptance */}
+          <div className="pt-1">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#5C564F] dark:text-[#A8A096]">
+              <input
+                type="checkbox"
+                checked={activeForm.acceptedTerms}
+                onChange={(e) => updateField('acceptedTerms', e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-[#D0C6B0]"
+              />
+              <span>
+                I confirm our GSTIN and business details are accurate and agree to MAISON’s{' '}
+                <strong className="text-[#181615] dark:text-[#F5F2EB]">
+                  Business Partner Terms &amp; Conditions
+                </strong>
+                .
+              </span>
+            </label>
+            {errors.acceptedTerms && (
+              <p className="text-xs text-[#B93829] dark:text-[#E05A47] mt-1">
+                {errors.acceptedTerms}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 px-6 rounded-full bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F] text-xs font-semibold uppercase tracking-[0.16em] hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2"
+          >
+            {isSubmitting && <span className="maison-spinner" />}
+            <span>
+              {isSubmitting
+                ? 'Registering Business Account...'
+                : selectedChoice === 'merchant'
+                ? 'Complete Merchant Registration'
+                : selectedChoice === 'retailer'
+                ? 'Complete Retailer Registration'
+                : 'Complete Startup / Seller Registration'}
+            </span>
+          </button>
+        </form>
+
+        <div className="mt-6 pt-5 border-t border-[#E5DEC9] dark:border-[#2E2A25] flex flex-wrap items-center justify-between gap-2 text-xs text-[#5C564F] dark:text-[#A8A096]">
+          <span>Looking to register for personal shopping instead?</span>
+          <button
+            type="button"
+            onClick={onOpenShopperRegister}
+            className="font-semibold text-[#B89456] dark:text-[#CDA76E] hover:underline"
+          >
+            Switch to Shopper Registration →
+          </button>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

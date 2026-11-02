@@ -1,49 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@import "tailwindcss";
+/* Force Tailwind v4 (if installed) to obey the .dark class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
 
+/* Guaranteed Light/Dark override even if local Tailwind config ignores darkMode: 'class' */
+html.dark,
+html.dark body,
+html.dark #root > div {
+  background-color: #11100F !important;
+  color: #F5F2EB !important;
+}
 
-/* ==========================================================================
-   1. MAISON QUIET-LUXURY DESIGN TOKENS & BASE STYLES (auth.css)
-   ========================================================================== */
+html:not(.dark),
+html:not(.dark) body,
+html:not(.dark) #root > div {
+  background-color: #FAF7F2 !important;
+  color: #181615 !important;
+}
+
+/* Force dark mode surfaces & borders across all cards, navbars, and sections */
+html.dark header {
+  background-color: rgba(17, 16, 15, 0.95) !important;
+  border-color: #2E2A25 !important;
+}
+
+html.dark .bg-white {
+  background-color: #1F1C19 !important;
+  color: #F5F2EB !important;
+}
+
+html.dark .bg-\[\#FAF7F2\],
+html.dark .bg-\[\#F2ECE1\],
+html.dark .bg-\[\#F2ECE1\]\/60,
+html.dark .bg-\[\#F2ECE1\]\/70 {
+  background-color: #181614 !important;
+  color: #F5F2EB !important;
+}
+
+html.dark .text-\[\#181615\] {
+  color: #F5F2EB !important;
+}
+
+html.dark .text-\[\#5C564F\] {
+  color: #A8A096 !important;
+}
+
+html.dark .border-\[\#E5DEC9\],
+html.dark .border-\[\#D0C6B0\] {
+  border-color: #2E2A25 !important;
+}
+
 :root {
-  --maison-ivory: #FAF7F2;
-  --maison-cream: #F3EDE2;
+  --maison-bg: #FAF7F2;
+  --maison-bg-alt: #F2ECE1;
   --maison-surface: #FFFFFF;
-  --maison-charcoal: #1C1917;
-  --maison-taupe: #57524B;
-  --maison-muted: #8A8277;
-  --maison-gold: #B08D57;
-  --maison-terracotta: #9A5B3E;
-  --maison-olive: #2E4F3E;
+  --maison-text: #181615;
+  --maison-text-muted: #5C564F;
+  --maison-gold: #B89456;
+  --maison-gold-hover: #9E7B3E;
   --maison-border: #E5DEC9;
-  --maison-border-strong: #CEC4B0;
-  --maison-error: #B93829;
+  --maison-border-strong: #D0C6B0;
+  --maison-danger: #B93829;
+  --maison-success: #285943;
 }
 
 html.dark {
-  --maison-ivory: #141210;
-  --maison-cream: #1C1916;
-  --maison-surface: #211E1A;
-  --maison-charcoal: #F5F0E6;
-  --maison-taupe: #B8B0A4;
-  --maison-muted: #7D756B;
+  --maison-bg: #11100F;
+  --maison-bg-alt: #181614;
+  --maison-surface: #1F1C19;
+  --maison-text: #F5F2EB;
+  --maison-text-muted: #A8A096;
   --maison-gold: #CDA76E;
-  --maison-terracotta: #C87D5B;
-  --maison-olive: #4B7F65;
-  --maison-border: #332E28;
-  --maison-border-strong: #4A433B;
-  --maison-error: #E05A47;
+  --maison-gold-hover: #DFB980;
+  --maison-border: #2E2A25;
+  --maison-border-strong: #423C35;
+  --maison-danger: #E05A47;
+  --maison-success: #4B8F6E;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
 body {
   margin: 0;
-  background-color: var(--maison-ivory);
-  color: var(--maison-charcoal);
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--maison-bg);
+  color: var(--maison-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .font-editorial {
@@ -54,40 +104,14 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Split-Screen Authentication Layout */
-.maison-auth-shell {
-  min-height: calc(100vh - 4.75rem);
-  display: grid;
-  grid-template-columns: 5fr 7fr;
-}
-
-.maison-editorial-panel {
-  position: relative;
-  overflow: hidden;
-  background-color: #1C1917;
-  color: #FAF7F2;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 3.25rem;
-}
-
-.maison-form-panel {
-  display: flex;
-   flex-direction: column;
-  justify-content: center;
-  padding: 3rem 4rem;
-  background-color: var(--maison-ivory);
-}
-
-/* Inputs & Interactive Controls */
+/* Luxury Form Inputs */
 .maison-input {
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 0.75rem;
   border: 1px solid var(--maison-border);
   background-color: var(--maison-surface);
-  color: var(--maison-charcoal);
+  color: var(--maison-text);
   font-size: 0.9rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -95,11 +119,11 @@ body {
 .maison-input:focus {
   outline: none;
   border-color: var(--maison-gold);
-  box-shadow: 0 0 0 3px rgba(176, 141, 87, 0.15);
+  box-shadow: 0 0 0 3px rgba(184, 148, 86, 0.16);
 }
 
 .maison-input.input-error {
-  border-color: var(--maison-error);
+  border-color: var(--maison-danger);
 }
 
 /* Loading Spinner */
@@ -113,36 +137,7 @@ body {
   width: 1rem;
   height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #ffffff;
+  border-top-color: currentColor;
   border-radius: 9999px;
   animation: maisonSpin 0.7s linear infinite;
-}
-
-/* ==========================================================================
-   2. RESPONSIVE BREAKPOINTS (responsive.css)
-   ========================================================================== */
-@media (max-width: 1024px) {
-  .maison-auth-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .maison-editorial-panel {
-    min-height: 300px;
-    padding: 2.25rem 1.75rem;
-  }
-
-  .maison-form-panel {
-    padding: 2.25rem 1.75rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .maison-editorial-panel {
-    min-height: 250px;
-    padding: 1.75rem 1.25rem;
-  }
-
-  .maison-form-panel {
-    padding: 1.75rem 1.25rem;
-  }
 }

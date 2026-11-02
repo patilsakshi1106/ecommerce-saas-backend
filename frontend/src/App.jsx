@@ -1,57 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import IntroLogin from './pages/IntroLogin.jsx';
 import ShoppingRegister from './pages/ShoppingRegister.jsx';
 import BusinessRegister from './pages/BusinessRegister.jsx';
 import Home from './Home.jsx';
-// Configure your Express backend URL (leave empty if using a Vite proxy, or set to 'http://localhost:5000')
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+
+export const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
 
 /* ==========================================================================
-   ROLE DEFINITIONS (4 ACCOUNT TYPES: SHOPPER, STARTUP, RETAILER, MERCHANT)
-   ========================================================================== */
-export const ROLE_DEFINITIONS = {
-  shopper: {
-    id: 'shopper',
-    label: 'Shopper',
-    type: 'Personal Account (B2C)',
-    tagline: 'Browse curated Indian boutiques and purchase single pieces.',
-    badgeColor: 'text-[#9A5B3E] dark:text-[#C87D5B] border-[#9A5B3E]/40 bg-[#9A5B3E]/10',
-  },
-  startup: {
-    id: 'startup',
-    label: 'Startup',
-    type: 'Business Account (B2B / D2C)',
-    tagline: 'Establish or grow your new brand with low-MOQ sourcing.',
-    badgeColor: 'text-[#B08D57] dark:text-[#CDA76E] border-[#B08D57]/40 bg-[#B08D57]/10',
-  },
-  retailer: {
-    id: 'retailer',
-    label: 'Retailer',
-    type: 'Business Account (B2B Buyer)',
-    tagline: 'Source wholesale products and verified suppliers for your store.',
-    badgeColor: 'text-[#2E4F3E] dark:text-[#68A688] border-[#2E4F3E]/40 bg-[#2E4F3E]/10',
-  },
-  merchant: {
-    id: 'merchant',
-    label: 'Merchant',
-    type: 'Business Account (B2B Supplier)',
-    tagline: 'Showcase and manage your wholesale & retail product catalogues.',
-    badgeColor: 'text-[#2E4F3E] dark:text-[#68A688] border-[#2E4F3E]/40 bg-[#2E4F3E]/10',
-  },
-};
-
-/* ==========================================================================
-   AUTH SERVICE (authService.js) — CONNECTS TO EXPRESS / MONGODB BACKEND
+   AUTHENTICATION API SERVICE (Connects to Express + MongoDB Backend)
    ========================================================================== */
 export const authService = {
   /**
-   * Login request
-   * @param {'customer' | 'merchant'} accountCategory
-   * @param {{ email: string, password: string }} credentials
+   * Two Login Categories Across MAISON:
+   * - 'shopper' -> POST /api/auth/customer/login
+   * - 'business' -> POST /api/auth/login (Supports Merchants, Retailers, Startups)
    */
-  async login(accountCategory, { email, password }) {
+  async login(loginType, { email, password }) {
     const endpoint =
-      accountCategory === 'merchant'
+      loginType === 'business'
         ? `${API_BASE_URL}/api/auth/login`
         : `${API_BASE_URL}/api/auth/customer/login`;
 
@@ -64,25 +30,35 @@ export const authService = {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || `Authentication failed (HTTP ${response.status}).`);
+      throw new Error(payload.message || 'Invalid email or password.');
     }
 
-    // Store only the JWT and safe user profile metadata — NEVER store plaintext passwords.
-    // Note: Role permissions are always enforced server-side via the signed JWT.
+    // Retrieve stored business role metadata if available or from backend response
+    const savedRoleMap = JSON.parse(localStorage.getItem('maison_business_roles') || '{}');
+    const resolvedRole =
+      payload.data?.role ||
+      (loginType === 'business'
+        ? savedRoleMap[email.trim().toLowerCase()] || 'merchant'
+        : 'shopper');
+
+    const enrichedUser = {
+      ...payload.data,
+      accountStream: loginType,
+      role: resolvedRole,
+    };
+
     if (payload.token) {
       localStorage.setItem('maison_auth_token', payload.token);
     }
-    if (payload.data) {
-      localStorage.setItem('maison_user_profile', JSON.stringify(payload.data));
-    }
+    localStorage.setItem('maison_user_profile', JSON.stringify(enrichedUser));
 
-    return payload;
+    return { ...payload, data: enrichedUser };
   },
 
   /**
-   * Register a B2C Shopper (POST /api/auth/customer/signup)
+   * Register Regular Shopper (POST /api/auth/customer/signup)
    */
-  async registerShopper({ name, email, password }) {
+  async registerShopper({ name, email, phone, password }) {
     const endpoint = `${API_BASE_URL}/api/auth/customer/signup`;
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -90,6 +66,7 @@ export const authService = {
       body: JSON.stringify({
         name: name.trim(),
         email: email.trim(),
+        phone: phone ? phone.trim() : undefined,
         password,
       }),
     });
@@ -97,57 +74,50 @@ export const authService = {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || `Customer registration failed (HTTP ${response.status}).`);
+      throw new Error(payload.message || 'Shopper registration failed.');
     }
 
     return payload;
   },
 
   /**
-   * Register a B2B Business Account: Startup, Retailer, or Merchant (POST /api/auth/signup)
-   * Maps businessName -> storeName and validates 15-character gstNumber for the existing Express controller.
+   * Register Business: Merchant, Retailer, or Startup (POST /api/auth/signup)
    */
-  async registerBusiness({
-    role,
-    name,
-    email,
-    password,
-    storeName,
-    gstNumber,
-    businessCategory,
-    location,
-    roleSpecificDetail,
-  }) {
+  async registerBusiness(businessPayload) {
     const endpoint = `${API_BASE_URL}/api/auth/signup`;
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        storeName: storeName.trim(),
-        gstNumber: gstNumber.trim().toUpperCase(),
-        // Extended fields sent for forward-compatibility with Mongoose schema updates:
-        role,
-        businessCategory,
-        location: location.trim(),
-        roleSpecificDetail: roleSpecificDetail.trim(),
+        name: businessPayload.name.trim(),
+        email: businessPayload.email.trim(),
+        password: businessPayload.password,
+        storeName: businessPayload.storeName.trim(),
+        gstNumber: businessPayload.gstNumber.trim().toUpperCase(),
+        role: businessPayload.role,
+        businessCategory: businessPayload.businessCategory,
+        location: businessPayload.location?.trim(),
+        phone: businessPayload.phone?.trim(),
+        businessDetails: businessPayload.businessDetails,
       }),
     });
 
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || `Business registration failed (HTTP ${response.status}).`);
+      throw new Error(payload.message || 'Business registration failed.');
     }
+
+    // Record the registered business sub-role by email so unified Business Login knows their exact dashboard tier
+    const savedRoleMap = JSON.parse(localStorage.getItem('maison_business_roles') || '{}');
+    savedRoleMap[businessPayload.email.trim().toLowerCase()] = businessPayload.role;
+    localStorage.setItem('maison_business_roles', JSON.stringify(savedRoleMap));
 
     return payload;
   },
 
   /**
    * Password Reset Request
-   * Transparently checks if /api/auth/forgot-password exists on the Express server.
    */
   async requestPasswordReset(email) {
     const endpoint = `${API_BASE_URL}/api/auth/forgot-password`;
@@ -159,16 +129,13 @@ export const authService = {
 
     if (response.status === 404) {
       throw new Error(
-        'The password reset endpoint (POST /api/auth/forgot-password) is not yet implemented on the Express backend.'
+        'Password reset endpoint (POST /api/auth/forgot-password) is not yet configured on the backend server.'
       );
     }
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload.success) {
-      throw new Error(
-        payload.message ||
-          'Password reset endpoint is unavailable on the backend. Please contact support.'
-      );
+      throw new Error(payload.message || 'Unable to process password reset request.');
     }
 
     return payload;
@@ -176,239 +143,469 @@ export const authService = {
 };
 
 /* ==========================================================================
-   SHARED AUTH NAVBAR COMPONENT (AuthNavbar.jsx)
+   STICKY TOP NAVIGATION BAR WITH LOGIN & REGISTER DROPDOWNS
    ========================================================================== */
-export function AuthNavbar({ currentPage, selectedRole, onNavigateLogin, onNavigateHome, onSelectRole, darkMode, onToggleDark }) {
+export function MaisonNavbar({
+  currentPage,
+  darkMode,
+  onToggleDark,
+  onNavigateSection,
+  onOpenLoginStream,
+  onOpenShopperRegister,
+  onOpenBusinessRegister,
+  currentUser,
+  onLogout,
+}) {
+  const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const [registerDropdownOpen, setRegisterDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setLoginDropdownOpen(false);
+        setRegisterDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 h-[4.75rem] bg-[#FAF7F2]/95 dark:bg-[#141210]/95 backdrop-blur-md border-b border-[#E5DEC9] dark:border-[#332E28]">
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-8 flex items-center justify-between gap-4">
-        {/* MAISON Brand Identity */}
+    <header
+      ref={navRef}
+      className="sticky top-0 z-50 bg-[#FAF7F2]/95 dark:bg-[#11100F]/95 backdrop-blur-md border-b border-[#E5DEC9] dark:border-[#2E2A25] transition-colors"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between gap-4">
+        {/* LEFT: MAISON LOGO / WORDMARK */}
         <button
           type="button"
-          onClick={onNavigateHome}
-          className="flex items-center gap-3 text-left group focus:outline-none"
+          onClick={() => onNavigateSection('top')}
+          className="flex items-center gap-3 text-left focus:outline-none group"
         >
-          <div className="w-10 h-10 rounded-full bg-[#1C1917] text-[#FAF7F2] dark:bg-[#F5F0E6] dark:text-[#141210] flex items-center justify-center font-editorial text-xl font-semibold tracking-widest">
+          <div className="w-10 h-10 rounded-full bg-[#181615] text-[#FAF7F2] dark:bg-[#F5F2EB] dark:text-[#11100F] flex items-center justify-center font-editorial text-xl font-bold tracking-widest border border-[#B89456]/40">
             M
           </div>
           <div>
-            <span className="block font-editorial text-2xl font-semibold tracking-[0.18em] leading-none">
+            <span className="block font-editorial text-2xl sm:text-[26px] font-semibold tracking-[0.22em] leading-none">
               MAISON
             </span>
-            <span className="block text-[10px] tracking-[0.2em] uppercase text-[#8A8277] mt-1">
-              India • B2B &amp; B2C Commerce
+            <span className="block text-[9px] tracking-[0.24em] uppercase text-[#B89456] dark:text-[#CDA76E] mt-1 font-semibold">
+              All-In-One Luxury Marketplace
             </span>
           </div>
         </button>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-2 text-xs font-semibold tracking-wider uppercase">
+        {/* CENTER: NAVIGATION LINKS */}
+        <nav className="hidden lg:flex items-center gap-8 text-xs font-semibold uppercase tracking-[0.14em] text-[#5C564F] dark:text-[#A8A096]">
           <button
             type="button"
-            onClick={onNavigateLogin}
-            className={`px-4 py-2 rounded-full transition ${
-              currentPage === 'login'
-                ? 'bg-[#1C1917] text-[#FAF7F2] dark:bg-[#F5F0E6] dark:text-[#141210]'
-                : 'text-[#57524B] dark:text-[#B8B0A4] hover:text-[#1C1917] dark:hover:text-white'
+            onClick={() => onNavigateSection('top')}
+            className={`hover:text-[#181615] dark:hover:text-white transition ${
+              currentPage === 'intro' ? 'text-[#B89456] dark:text-[#CDA76E]' : ''
             }`}
           >
-            Sign In
+            Home
           </button>
           <button
             type="button"
-            onClick={() => onSelectRole('shopper')}
-            className={`px-4 py-2 rounded-full transition ${
-              currentPage === 'shopping-register'
-                ? 'bg-[#9A5B3E] text-white'
-                : 'text-[#57524B] dark:text-[#B8B0A4] hover:text-[#9A5B3E]'
-            }`}
+            onClick={() => onNavigateSection('about-maison')}
+            className="hover:text-[#181615] dark:hover:text-white transition"
           >
-            Shopper Registration
+            About Us
           </button>
           <button
             type="button"
-            onClick={() =>
-              onSelectRole(selectedRole === 'shopper' ? 'startup' : selectedRole)
-            }
-            className={`px-4 py-2 rounded-full transition ${
-              currentPage === 'business-register'
-                ? 'bg-[#2E4F3E] text-white'
-                : 'text-[#57524B] dark:text-[#B8B0A4] hover:text-[#2E4F3E]'
-            }`}
+            onClick={() => onNavigateSection('explore-categories')}
+            className="hover:text-[#181615] dark:hover:text-white transition"
           >
-            Business Registration
+            Categories
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateSection('for-businesses')}
+            className="hover:text-[#181615] dark:hover:text-white transition"
+          >
+            For Businesses
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateSection('maison-footer')}
+            className="hover:text-[#181615] dark:hover:text-white transition"
+          >
+            Contact
           </button>
         </nav>
 
-        {/* Right Controls */}
-        <div className="flex items-center gap-2.5">
+        {/* RIGHT: THEME TOGGLE, LOGIN DROPDOWN, REGISTER DROPDOWN */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Theme Toggle */}
           <button
             type="button"
             onClick={onToggleDark}
-            className="px-3.5 py-2 rounded-full border border-[#CEC4B0] dark:border-[#4A433B] text-[11px] font-semibold tracking-wider uppercase hover:bg-[#F3EDE2] dark:hover:bg-[#211E1A] transition"
+            className="px-3.5 py-2 rounded-full border border-[#D0C6B0] dark:border-[#423C35] text-[11px] font-semibold uppercase tracking-wider hover:border-[#B89456] transition flex items-center gap-1.5"
             aria-label="Toggle color theme"
           >
-            {darkMode ? '☀ Ivory' : '☾ Espresso'}
+            <span>{darkMode ? '☀' : '☾'}</span>
+            <span className="hidden sm:inline">{darkMode ? 'Light' : 'Dark'}</span>
+          </button>
+
+          {currentUser ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onNavigateSection('home')}
+                className="px-4 py-2 rounded-full bg-[#B89456] text-white text-xs font-semibold uppercase tracking-wider"
+              >
+                {currentUser.storeName || currentUser.name}
+              </button>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="px-3 py-2 rounded-full border border-[#E5DEC9] dark:border-[#2E2A25] text-xs font-semibold uppercase tracking-wider hover:text-[#B93829]"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* LOGIN DROPDOWN (Strictly 2 Options: Shopper Login & Business Login) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginDropdownOpen(!loginDropdownOpen);
+                    setRegisterDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 rounded-full border border-[#D0C6B0] dark:border-[#423C35] hover:border-[#181615] dark:hover:border-white text-xs font-semibold uppercase tracking-wider transition flex items-center gap-1.5"
+                >
+                  <span>Login</span>
+                  <span className="text-[10px]">▾</span>
+                </button>
+
+                {loginDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#1F1C19] border border-[#E5DEC9] dark:border-[#2E2A25] shadow-xl py-2 z-50">
+                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B89456]">
+                      Select Login Portal
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginDropdownOpen(false);
+                        onOpenLoginStream('shopper');
+                      }}
+                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
+                    >
+                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
+                        Shopper Login
+                      </span>
+                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
+                        Personal shopping &amp; orders
+                      </span>
+                    </button>
+                    <div className="my-1 border-t border-[#E5DEC9] dark:border-[#2E2A25]" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginDropdownOpen(false);
+                        onOpenLoginStream('business');
+                      }}
+                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
+                    >
+                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
+                        Business Login
+                      </span>
+                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
+                        Merchants, Retailers &amp; Startups
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* REGISTER DROPDOWN (Strictly 2 Options: Shopper Registration & Business Registration) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegisterDropdownOpen(!registerDropdownOpen);
+                    setLoginDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 rounded-full bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F] hover:opacity-90 text-xs font-semibold uppercase tracking-wider transition flex items-center gap-1.5"
+                >
+                  <span>Register</span>
+                  <span className="text-[10px]">▾</span>
+                </button>
+
+                {registerDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1F1C19] border border-[#E5DEC9] dark:border-[#2E2A25] shadow-xl py-2 z-50">
+                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B89456]">
+                      Create New Account
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegisterDropdownOpen(false);
+                        onOpenShopperRegister();
+                      }}
+                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
+                    >
+                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
+                        Shopper Registration
+                      </span>
+                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
+                        Browse &amp; buy across all categories
+                      </span>
+                    </button>
+                    <div className="my-1 border-t border-[#E5DEC9] dark:border-[#2E2A25]" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegisterDropdownOpen(false);
+                        onOpenBusinessRegister('merchant');
+                      }}
+                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
+                    >
+                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
+                        Business Registration
+                      </span>
+                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
+                        Merchant, Retailer &amp; Startup onboarding
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Mobile Menu Trigger */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 rounded-lg border border-[#E5DEC9] dark:border-[#2E2A25] text-xs"
+            aria-label="Toggle Menu"
+          >
+            ☰
           </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden px-4 pt-2 pb-4 border-t border-[#E5DEC9] dark:border-[#2E2A25] bg-[#FAF7F2] dark:bg-[#11100F] flex flex-col gap-2 text-xs font-semibold uppercase tracking-wider">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNavigateSection('top');
+            }}
+            className="py-2 text-left"
+          >
+            Home
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNavigateSection('about-maison');
+            }}
+            className="py-2 text-left"
+          >
+            About Us
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNavigateSection('explore-categories');
+            }}
+            className="py-2 text-left"
+          >
+            Categories
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNavigateSection('for-businesses');
+            }}
+            className="py-2 text-left"
+          >
+            For Businesses
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNavigateSection('maison-footer');
+            }}
+            className="py-2 text-left"
+          >
+            Contact
+          </button>
+        </div>
+      )}
     </header>
   );
 }
 
 /* ==========================================================================
-   SHARED 4-ROLE SELECTOR COMPONENT (RoleSelector.jsx)
-   Allows selecting Shopper, Startup, Retailer, or Merchant
-   ========================================================================== */
-export function RoleSelector({ selectedRole, onChangeRole }) {
-  const roles = Object.values(ROLE_DEFINITIONS);
-
-  return (
-    <div className="mb-7">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#57524B] dark:text-[#B8B0A4]">
-          Select Account Type
-        </span>
-        <span className="text-[11px] text-[#8A8277]">
-          {selectedRole === 'shopper' ? 'Personal B2C Account' : 'GST Business Account'}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        {roles.map((role) => {
-          const isSelected = selectedRole === role.id;
-          return (
-            <button
-              key={role.id}
-              type="button"
-              onClick={() => onChangeRole(role.id)}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                isSelected
-                  ? 'border-[#1C1917] dark:border-[#F5F0E6] bg-white dark:bg-[#211E1A] shadow-sm ring-1 ring-[#1C1917] dark:ring-[#F5F0E6]'
-                  : 'border-[#E5DEC9] dark:border-[#332E28] bg-[#F3EDE2]/50 dark:bg-[#1C1916]/60 hover:border-[#B08D57]'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-editorial text-lg font-semibold leading-none">
-                  {role.label}
-                </span>
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    isSelected ? 'bg-[#9A5B3E]' : 'bg-transparent border border-[#8A8277]'
-                  }`}
-                />
-              </div>
-              <p className="text-[11px] text-[#57524B] dark:text-[#B8B0A4] mt-1.5 line-clamp-2 leading-snug">
-                {role.tagline}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ==========================================================================
-   ROOT APPLICATION CONTROLLER (App.jsx)
+   ROOT APPLICATION STATE & ROUTER (App.jsx)
    ========================================================================== */
 export default function App() {
-  // 'login' | 'shopping-register' | 'business-register'
-  const [currentPage, setCurrentPage] = useState('home');
-  // 'shopper' | 'startup' | 'retailer' | 'merchant'
-  const [selectedRole, setSelectedRole] = useState('shopper');
-  // Preserve common fields if a user switches between Shopper and Business roles during registration
-  const [sharedDraft, setSharedDraft] = useState({ name: '', email: '' });
+  // 'intro' | 'shopping-register' | 'business-register' | 'home'
+  const [currentPage, setCurrentPage] = useState('intro');
+  // 'shopper' | 'business'
+  const [loginStream, setLoginStream] = useState('shopper');
+  // 'merchant' | 'retailer' | 'startup'
+  const [initialBusinessRole, setInitialBusinessRole] = useState('merchant');
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('maison_user_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('maison_theme') === 'dark';
   });
 
   useEffect(() => {
-    const root = document.documentElement;
+    const html = document.documentElement;
+    const body = document.body;
+
     if (darkMode) {
-      root.classList.add('dark');
+      html.classList.add('dark');
+      body.classList.add('dark');
+      html.setAttribute('data-theme', 'dark');
       localStorage.setItem('maison_theme', 'dark');
     } else {
-      root.classList.remove('dark');
+      html.classList.remove('dark');
+      body.classList.remove('dark');
+      html.setAttribute('data-theme', 'light');
       localStorage.setItem('maison_theme', 'light');
     }
   }, [darkMode]);
 
-  // Navigate to registration with a preselected role ("Start Shopping" -> 'shopper', "Start Your Online Business" -> 'startup' | 'retailer' | 'merchant')
-  const handleSelectRoleAndNavigate = (role) => {
-    setSelectedRole(role);
-    if (role === 'shopper') {
-      setCurrentPage('shopping-register');
-    } else {
-      setCurrentPage('business-register');
+  const handleNavigateSection = (sectionId) => {
+    if (sectionId === 'home' && currentUser) {
+      setCurrentPage('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+    if (currentPage !== 'intro') {
+      setCurrentPage('intro');
+      setTimeout(() => {
+        if (sectionId === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          const el = document.getElementById(sectionId);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 80);
+    } else {
+      if (sectionId === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleOpenLoginStream = (stream) => {
+    setLoginStream(stream);
+    if (currentPage !== 'intro') {
+      setCurrentPage('intro');
+      setTimeout(() => {
+        const el = document.getElementById('maison-login-portal');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 80);
+    } else {
+      const el = document.getElementById('maison-login-portal');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleOpenShopperRegister = () => {
+    setCurrentPage('shopping-register');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleNavigateLogin = () => {
-    setCurrentPage('login');
+  const handleOpenBusinessRegister = (role = 'merchant') => {
+    setInitialBusinessRole(role);
+    setCurrentPage('business-register');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const handleNavigateHome = () => {
-  setCurrentPage('home');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+
+  const handleLoginSuccess = (userData) => {
+    setCurrentUser(userData);
+    setCurrentPage('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('maison_auth_token');
+    localStorage.removeItem('maison_user_profile');
+    setCurrentUser(null);
+    setCurrentPage('intro');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#1C1917] dark:bg-[#141210] dark:text-[#F5F0E6]">
-      <AuthNavbar
+    <div
+      className={`${
+        darkMode ? 'dark bg-[#11100F] text-[#F5F2EB]' : 'bg-[#FAF7F2] text-[#181615]'
+      } min-h-screen flex flex-col transition-colors duration-300`}>
+      <MaisonNavbar
         currentPage={currentPage}
-        selectedRole={selectedRole}
-        onNavigateLogin={handleNavigateLogin}
-        onNavigateHome={handleNavigateHome}
-        onSelectRole={handleSelectRoleAndNavigate}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
+        onNavigateSection={handleNavigateSection}
+        onOpenLoginStream={handleOpenLoginStream}
+        onOpenShopperRegister={handleOpenShopperRegister}
+        onOpenBusinessRegister={handleOpenBusinessRegister}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1">
-        {currentPage === 'home' && (
-  <Home
-    onLogin={handleNavigateLogin}
-    onCustomerRegister={() =>
-      handleSelectRoleAndNavigate('shopper')
-    }
-    onMerchantRegister={() =>
-      handleSelectRoleAndNavigate('merchant')
-    }
-    onShop={() => handleSelectRoleAndNavigate('shopper')}
-  />
-)}
-        {currentPage === 'login' && (
-          <IntroLogin 
-           onNavigateHome={() => setCurrentPage('home')} 
-            onStartShopping={() => handleSelectRoleAndNavigate('shopper')}
-            onStartBusiness={(defaultBizRole = 'startup') =>
-              handleSelectRoleAndNavigate(defaultBizRole)
-            }
-            onSelectRole={handleSelectRoleAndNavigate}
+        {currentPage === 'intro' && (
+          <IntroLogin
+            loginStream={loginStream}
+            setLoginStream={setLoginStream}
+            onOpenShopperRegister={handleOpenShopperRegister}
+            onOpenBusinessRegister={handleOpenBusinessRegister}
+            onLoginSuccess={handleLoginSuccess}
           />
         )}
-      
+
         {currentPage === 'shopping-register' && (
           <ShoppingRegister
-            onNavigateHome={() => setCurrentPage('home')}
-            selectedRole={selectedRole}
-            onChangeRole={handleSelectRoleAndNavigate}
-            onNavigateLogin={handleNavigateLogin}
-            sharedDraft={sharedDraft}
-            setSharedDraft={setSharedDraft}
+            onOpenShopperLogin={() => handleOpenLoginStream('shopper')}
+            onOpenBusinessRegister={() => handleOpenBusinessRegister('merchant')}
           />
         )}
 
         {currentPage === 'business-register' && (
           <BusinessRegister
-            onNavigateHome={() => setCurrentPage('home')}
-            selectedRole={selectedRole === 'shopper' ? 'startup' : selectedRole}
-            onChangeRole={handleSelectRoleAndNavigate}
-            onNavigateLogin={handleNavigateLogin}
-            sharedDraft={sharedDraft}
-            setSharedDraft={setSharedDraft}
+            initialRole={initialBusinessRole}
+            onOpenBusinessLogin={() => handleOpenLoginStream('business')}
+            onOpenShopperRegister={handleOpenShopperRegister}
+          />
+        )}
+
+        {currentPage === 'home' && (
+          <Home
+            user={currentUser}
+            onLogout={handleLogout}
+            onBackToLanding={() => setCurrentPage('intro')}
           />
         )}
       </main>
