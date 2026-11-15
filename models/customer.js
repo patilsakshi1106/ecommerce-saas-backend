@@ -20,10 +20,21 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a password'],
     minLength: [6, 'Password must be at least 6 characters long']
-  },
+  }, 
+  resetPasswordToken: {
+      type: String
+   },
+   resetPasswordExpires: {
+      type: Date
+   },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  role: {
+    type: String,
+    enum: ['customer', 'admin', 'merchant'],
+    default: 'customer'
   }
 });
 

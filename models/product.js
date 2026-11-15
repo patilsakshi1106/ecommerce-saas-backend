@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
     merchantId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Merchant',
+        ref: 'Customer',
         required: [true, 'A product must belong to a verified merchant']
     },
     name: {

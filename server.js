@@ -2,13 +2,13 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // 💡 1. Imported Routes
-const authRoutes = require('./routes/authRoutes');
+const {router: authRoutes} = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
-
+const groupOrderRoutes = require('./routes/groupOrderRoutes'); // Import the new group order routes
 const app = express();
 
 // Middlewares
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
-
+app.use('/api/group-orders', groupOrderRoutes); // Use the new group order routes
 // 💡 5. Database Connection Logic
 const PORT = process.env.PORT || 5000;
 const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/ecommerce-saas";
