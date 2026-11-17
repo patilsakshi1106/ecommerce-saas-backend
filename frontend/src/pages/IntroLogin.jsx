@@ -102,28 +102,28 @@ const MARKETPLACE_CATEGORIES = [
 const WHY_MAISON_FEATURES = [
   {
     number: '01',
-    title: 'All-In-One Multi-Category Depth',
-    desc: 'From flagship electronics and smart kitchen appliances to fine apparel and gourmet groceries, shop every department in one unified cart.',
+    title: 'All-In-One B2B Category Depth',
+    desc: 'From commercial electronics and smart appliances to apparel and wholesale groceries, source every business department in one unified trade cart.',
   },
   {
     number: '02',
-    title: 'Refined & Effortless Shopping',
-    desc: 'Experience clutter-free discovery, transparent pricing, and verified provenance across every product listing.',
+    title: 'Collaborative Group Bulk Buying',
+    desc: 'Merchant MOQ of 500 units when you only need 100? Create a buying group so other retailers and startups needing smaller quantities can join and split the 500-unit bulk order.',
   },
   {
     number: '03',
-    title: 'Direct Business Opportunities',
-    desc: 'Built for both B2C retail buyers and B2B commercial trade—enabling manufacturers, retailers, and startups to scale seamlessly.',
+    title: 'Direct B2B Trade Ecosystem',
+    desc: 'Built exclusively for commercial trade—enabling manufacturers, wholesale merchants, retailers, and startups to scale without middlemen.',
   },
   {
     number: '04',
-    title: 'Intelligent Product Discovery',
-    desc: 'Curated cross-category collections and verified merchant ratings help you find trusted products without endless scrolling.',
+    title: 'Verified Supplier Discovery',
+    desc: 'Curated cross-category wholesale catalogues and GST-verified merchant ratings help you find trusted bulk suppliers effortlessly.',
   },
   {
     number: '05',
-    title: 'Connected Commerce Ecosystem',
-    desc: 'One cohesive infrastructure uniting everyday consumers with GST-verified Indian merchants, retailers, and emerging online sellers.',
+    title: 'Startup & Retailer Friendly',
+    desc: 'One cohesive infrastructure uniting high-volume manufacturers with independent retailers and emerging online sellers.',
   },
 ];
 
@@ -270,7 +270,7 @@ export default function IntroLogin({
             </h1>
 
             <p className="text-base sm:text-lg text-[#5C564F] dark:text-[#A8A096] leading-relaxed max-w-xl">
-              Discover products across categories, connect with trusted businesses and experience a smarter way to shop with MAISON.
+              Discover products across categories and connect with trusted businesses.
             </p>
 
             {/* Primary Hero CTAs */}
@@ -287,7 +287,7 @@ export default function IntroLogin({
                 onClick={() => onOpenBusinessRegister('merchant')}
                 className="px-8 py-4 rounded-full border border-[#D0C6B0] dark:border-[#423C35] hover:border-[#B89456] text-xs font-semibold uppercase tracking-[0.16em] transition"
               >
-                Join as a Business
+                Grow Your Business
               </button>
             </div>
 
@@ -524,7 +524,7 @@ export default function IntroLogin({
       </section>
 
       {/* ====================================================================
-          E. WHY MAISON?
+          E. WHY MAISON? (B2B & GROUP BULK BUYING)
           ==================================================================== */}
       <section className="py-16 lg:py-24 bg-[#F2ECE1]/60 dark:bg-[#181614] border-b border-[#E5DEC9] dark:border-[#2E2A25]">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
@@ -533,7 +533,7 @@ export default function IntroLogin({
               Why MAISON?
             </span>
             <h2 className="font-editorial text-4xl sm:text-5xl font-semibold mt-1">
-              Designed for Smarter Shopping &amp; Scalable Commerce
+              Designed for Smarter Sourcing &amp; Scalable B2B Commerce
             </h2>
           </div>
 
@@ -556,6 +556,36 @@ export default function IntroLogin({
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Collaborative Bulk Group-Buy Highlight Banner */}
+          <div className="mt-8 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#1F1C19] border border-[#B89456]/50 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.18em] bg-[#F2ECE1] dark:bg-[#2A2622] text-[#B89456] dark:text-[#CDA76E]">
+                ✦ Signature Feature • MOQ Group Splitting
+              </span>
+              <h3 className="font-editorial text-2xl sm:text-3xl font-semibold">
+                Need 100 Units from a 500-Unit Merchant Bulk Listing?
+              </h3>
+              <p className="text-xs sm:text-sm text-[#5C564F] dark:text-[#A8A096] leading-relaxed">
+                Don’t overstock or lock up your working capital. On MAISON, any retailer or startup can <strong>create a Bulk Buying Group</strong> for a 500-unit merchant batch, claim the 100 units they need, and let other verified retailers join the group to claim the remaining units at factory-direct bulk pricing.
+              </p>
+            </div>
+
+            <div className="w-full lg:w-auto shrink-0 p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#181614] border border-[#E5DEC9] dark:border-[#2E2A25] text-xs space-y-2 min-w-[260px]">
+              <div className="flex justify-between font-semibold">
+                <span>Merchant Bulk MOQ:</span>
+                <span className="font-mono-code text-[#B89456]">500 Units</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-[#E5DEC9] dark:bg-[#2E2A25] overflow-hidden flex">
+                <div className="w-1/5 bg-[#181615] dark:bg-[#FAF7F2]" title="Your Claim: 100 Units" />
+                <div className="w-3/5 bg-[#B89456]" title="Joined Retailers: 300 Units" />
+              </div>
+              <div className="flex justify-between text-[11px] text-[#5C564F] dark:text-[#A8A096]">
+                <span>You: 100u • 3 Retailers: 300u</span>
+                <span className="font-semibold text-[#B89456]">100u Left</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -614,7 +644,7 @@ export default function IntroLogin({
       </section>
 
       {/* ====================================================================
-          7. UNIFIED TWO-CATEGORY LOGIN EXPERIENCE (SHOPPER LOGIN & BUSINESS LOGIN)
+          7. UNIFIED BUSINESS LOGIN EXPERIENCE
           ==================================================================== */}
       <section id="maison-login-portal" className="py-16 lg:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-8">
@@ -623,19 +653,13 @@ export default function IntroLogin({
             <div className="lg:col-span-5 bg-[#181615] text-[#FAF7F2] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
               <div>
                 <span className="inline-block px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.18em] border border-[#B89456]/50 text-[#CDA76E]">
-                  {loginStream === 'business'
-                    ? 'Unified Business Authentication'
-                    : 'Personal Shopper Authentication'}
+                  Unified Business Authentication
                 </span>
                 <h2 className="font-editorial text-4xl font-medium mt-4 leading-tight">
-                  {loginStream === 'business'
-                    ? 'One Business Login for Merchants, Retailers & Startups.'
-                    : 'Welcome Back to Your Personal MAISON Account.'}
+                  One Business Login for Merchants, Retailers &amp; Startups.
                 </h2>
                 <p className="text-xs sm:text-sm text-[#E5DEC9]/80 mt-3 leading-relaxed">
-                  {loginStream === 'business'
-                    ? 'Sign in with your registered business email and password. MAISON automatically identifies your registered business role (Merchant, Retailer, or Startup) and directs you to your workspace.'
-                    : 'Sign in with your email or Gmail address to access multi-category shopping, saved items, and order tracking.'}
+                  Sign in with your registered business email and password. MAISON automatically identifies your registered business role (Merchant, Retailer, or Startup) and directs you to your workspace.
                 </p>
               </div>
 
@@ -644,13 +668,6 @@ export default function IntroLogin({
                   New to MAISON?
                 </span>
                 <div className="flex flex-wrap gap-2.5">
-                  <button
-                    type="button"
-                    onClick={onOpenShopperRegister}
-                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold uppercase tracking-wider transition"
-                  >
-                    Shopper Registration →
-                  </button>
                   <button
                     type="button"
                     onClick={() => onOpenBusinessRegister('merchant')}
@@ -662,57 +679,23 @@ export default function IntroLogin({
               </div>
             </div>
 
-            {/* Right Login Form (Strictly Two Login Categories: Shopper Login vs Business Login) */}
+            {/* Right Login Form (Common Business Login Only) */}
             <div className="lg:col-span-7 p-8 sm:p-12">
-              {/* Two-Option Login Stream Switcher */}
               <div className="flex flex-wrap items-center justify-between gap-4 mb-7">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B89456] dark:text-[#CDA76E]">
                     MAISON Account Access
                   </span>
                   <h3 className="font-editorial text-3xl font-semibold mt-0.5">
-                    {loginStream === 'business' ? 'Business Login' : 'Shopper Login'}
-                  </h3>
-                </div>
-
-                <div className="inline-flex p-1 rounded-full bg-[#F2ECE1] dark:bg-[#11100F] border border-[#E5DEC9] dark:border-[#2E2A25] text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginStream('shopper');
-                      setServerError('');
-                    }}
-                    className={`px-4 py-2 rounded-full transition ${
-                      loginStream === 'shopper'
-                        ? 'bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F]'
-                        : 'text-[#5C564F] dark:text-[#A8A096]'
-                    }`}
-                  >
-                    Shopper Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginStream('business');
-                      setServerError('');
-                    }}
-                    className={`px-4 py-2 rounded-full transition ${
-                      loginStream === 'business'
-                        ? 'bg-[#181615] text-[#FAF7F2] dark:bg-[#B89456] dark:text-[#11100F]'
-                        : 'text-[#5C564F] dark:text-[#A8A096]'
-                    }`}
-                  >
                     Business Login
-                  </button>
+                  </h3>
                 </div>
               </div>
 
-              {loginStream === 'business' && (
-                <div className="mb-5 px-4 py-2.5 rounded-xl bg-[#F2ECE1]/70 dark:bg-[#181614] border border-[#E5DEC9] dark:border-[#2E2A25] text-xs text-[#5C564F] dark:text-[#A8A096]">
-                  Supports <strong>Merchants</strong>, <strong>Retailers</strong>, and{' '}
-                  <strong>Startups / Online Sellers</strong>. Your role is automatically retrieved upon login.
-                </div>
-              )}
+              <div className="mb-5 px-4 py-2.5 rounded-xl bg-[#F2ECE1]/70 dark:bg-[#181614] border border-[#E5DEC9] dark:border-[#2E2A25] text-xs text-[#5C564F] dark:text-[#A8A096]">
+                Supports <strong>Merchants</strong>, <strong>Retailers</strong>, and{' '}
+                <strong>Startups / Online Sellers</strong>. Your role is automatically retrieved upon login.
+              </div>
 
               {serverError && (
                 <div
@@ -742,11 +725,7 @@ export default function IntroLogin({
                       setEmail(e.target.value);
                       if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
                     }}
-                    placeholder={
-                      loginStream === 'business'
-                        ? 'partner@business.com'
-                        : 'you@gmail.com'
-                    }
+                    placeholder="partner@business.com"
                     className={`maison-input ${fieldErrors.email ? 'input-error' : ''}`}
                   />
                   {fieldErrors.email && (
@@ -809,11 +788,7 @@ export default function IntroLogin({
                 >
                   {isSubmitting && <span className="maison-spinner" />}
                   <span>
-                    {isSubmitting
-                      ? 'Signing In...'
-                      : loginStream === 'business'
-                      ? 'Login to Business Account'
-                      : 'Login to Shopper Account'}
+                    {isSubmitting ? 'Signing In...' : 'Login to Business Account'}
                   </span>
                 </button>
               </form>
@@ -857,30 +832,16 @@ export default function IntroLogin({
                 </div>
               )}
 
-              {/* Bottom Registration Link matching active Login stream */}
+              {/* Bottom Registration Link */}
               <div className="mt-6 pt-5 border-t border-[#E5DEC9] dark:border-[#2E2A25] flex items-center justify-between text-xs text-[#5C564F] dark:text-[#A8A096]">
-                <span>
-                  {loginStream === 'business'
-                    ? 'Don’t have a business account yet?'
-                    : 'New shopper on MAISON?'}
-                </span>
-                {loginStream === 'business' ? (
-                  <button
-                    type="button"
-                    onClick={() => onOpenBusinessRegister('merchant')}
-                    className="font-semibold text-[#B89456] dark:text-[#CDA76E] hover:underline"
-                  >
-                    Go to Business Registration →
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onOpenShopperRegister}
-                    className="font-semibold text-[#B89456] dark:text-[#CDA76E] hover:underline"
-                  >
-                    Go to Shopper Registration →
-                  </button>
-                )}
+                <span>Don’t have a business account yet?</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenBusinessRegister('merchant')}
+                  className="font-semibold text-[#B89456] dark:text-[#CDA76E] hover:underline"
+                >
+                  Go to Business Registration →
+                </button>
               </div>
             </div>
           </div>
