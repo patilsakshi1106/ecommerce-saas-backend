@@ -1,10 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import IntroLogin from './pages/IntroLogin.jsx';
-import ShoppingRegister from './pages/ShoppingRegister.jsx';
 import BusinessRegister from './pages/BusinessRegister.jsx';
+import MerchantDashboard from './pages/MerchantDashboard.jsx';
+import RetailerDashboard from './pages/RetailerDashboard.jsx';
+import StartupDashboard from './pages/StartupDashboard.jsx';
 import Home from './Home.jsx';
 
 export const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+
+/* ==========================================================================
+   ROLE -> DASHBOARD MAP
+   The role is saved at registration, returned by the backend at login
+   (data.role), and used here to decide which dashboard to open.
+   ========================================================================== */
+const DASHBOARD_BY_ROLE = {
+  merchant: MerchantDashboard,
+  retailer: RetailerDashboard,
+  startup: StartupDashboard,
+};
+
+// Decides which page a user lands on after login / on page refresh.
+const getLandingPage = (user) => {
+  if (!user) return 'intro';
+  if (user.accountStream === 'business' && DASHBOARD_BY_ROLE[user.role]) {
+    return 'dashboard';
+  }
+  return 'home';
+};
 
 /* ==========================================================================
    AUTHENTICATION API SERVICE (Connects to Express + MongoDB Backend)
@@ -12,8 +34,11 @@ export const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5
 export const authService = {
   /**
    * Two Login Categories Across MAISON:
-   * - 'shopper' -> POST /api/auth/customer/login
+  
    * - 'business' -> POST /api/auth/login (Supports Merchants, Retailers, Startups)
+   *
+   * Expected backend response shape:
+   * { success: true, token: '...', data: { name, email, storeName, role, ... } }
    */
   async login(loginType, { email, password }) {
     const endpoint =
@@ -33,12 +58,17 @@ export const authService = {
       throw new Error(payload.message || 'Invalid email or password.');
     }
 
-    // Retrieve stored business role metadata if available or from backend response
+    // The backend's data.role is the source of truth.
+    // The localStorage map is only a temporary fallback for this browser;
+    // remove it once the backend reliably returns data.role.
     const savedRoleMap = JSON.parse(localStorage.getItem('maison_business_roles') || '{}');
+    const backendRole = payload.data?.role
+      ? String(payload.data.role).toLowerCase()
+      : undefined;
     const resolvedRole =
-      payload.data?.role ||
+      backendRole ||
       (loginType === 'business'
-        ? savedRoleMap[email.trim().toLowerCase()] || 'merchant'
+        ? savedRoleMap[email.trim().toLowerCase()]
         : 'shopper');
 
     const enrichedUser = {
@@ -55,30 +85,6 @@ export const authService = {
     return { ...payload, data: enrichedUser };
   },
 
-  /**
-   * Register Regular Shopper (POST /api/auth/customer/signup)
-   */
-  async registerShopper({ name, email, phone, password }) {
-    const endpoint = `${API_BASE_URL}/api/auth/customer/signup`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone ? phone.trim() : undefined,
-        password,
-      }),
-    });
-
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok || !payload.success) {
-      throw new Error(payload.message || 'Shopper registration failed.');
-    }
-
-    return payload;
-  },
 
   /**
    * Register Business: Merchant, Retailer, or Startup (POST /api/auth/signup)
@@ -108,7 +114,8 @@ export const authService = {
       throw new Error(payload.message || 'Business registration failed.');
     }
 
-    // Record the registered business sub-role by email so unified Business Login knows their exact dashboard tier
+    // Temporary fallback: remember the registered role for this browser.
+    // The backend should return the role at login, which is the real source.
     const savedRoleMap = JSON.parse(localStorage.getItem('maison_business_roles') || '{}');
     savedRoleMap[businessPayload.email.trim().toLowerCase()] = businessPayload.role;
     localStorage.setItem('maison_business_roles', JSON.stringify(savedRoleMap));
@@ -151,7 +158,6 @@ export function MaisonNavbar({
   onToggleDark,
   onNavigateSection,
   onOpenLoginStream,
-  onOpenShopperRegister,
   onOpenBusinessRegister,
   currentUser,
   onLogout,
@@ -288,23 +294,9 @@ export function MaisonNavbar({
                 {loginDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#1F1C19] border border-[#E5DEC9] dark:border-[#2E2A25] shadow-xl py-2 z-50">
                     <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B89456]">
-                      Select Login Portal
+                      Login
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoginDropdownOpen(false);
-                        onOpenLoginStream('shopper');
-                      }}
-                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
-                    >
-                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
-                        Shopper Login
-                      </span>
-                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
-                        Personal shopping &amp; orders
-                      </span>
-                    </button>
+                  
                     <div className="my-1 border-t border-[#E5DEC9] dark:border-[#2E2A25]" />
                     <button
                       type="button"
@@ -315,7 +307,7 @@ export function MaisonNavbar({
                       className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
                     >
                       <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
-                        Business Login
+                        Login
                       </span>
                       <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
                         Merchants, Retailers &amp; Startups
@@ -344,21 +336,7 @@ export function MaisonNavbar({
                     <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B89456]">
                       Create New Account
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRegisterDropdownOpen(false);
-                        onOpenShopperRegister();
-                      }}
-                      className="w-full px-4 py-2.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-[#2A2622] transition flex flex-col"
-                    >
-                      <span className="text-xs font-semibold text-[#181615] dark:text-[#F5F2EB]">
-                        Shopper Registration
-                      </span>
-                      <span className="text-[11px] text-[#5C564F] dark:text-[#A8A096]">
-                        Browse &amp; buy across all categories
-                      </span>
-                    </button>
+            
                     <div className="my-1 border-t border-[#E5DEC9] dark:border-[#2E2A25]" />
                     <button
                       type="button"
@@ -456,13 +434,7 @@ export function MaisonNavbar({
    ROOT APPLICATION STATE & ROUTER (App.jsx)
    ========================================================================== */
 export default function App() {
-  // 'intro' | 'shopping-register' | 'business-register' | 'home'
-  const [currentPage, setCurrentPage] = useState('intro');
-  // 'shopper' | 'business'
-  const [loginStream, setLoginStream] = useState('shopper');
-  // 'merchant' | 'retailer' | 'startup'
-  const [initialBusinessRole, setInitialBusinessRole] = useState('merchant');
-
+  // Restore a saved session first, so the starting page can depend on it.
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('maison_user_profile');
@@ -471,6 +443,13 @@ export default function App() {
       return null;
     }
   });
+
+  // 'intro' | 'shopping-register' | 'business-register' | 'home' | 'dashboard'
+  const [currentPage, setCurrentPage] = useState(() => getLandingPage(currentUser));
+  // 'shopper' | 'business'
+  const [loginStream, setLoginStream] = useState('shopper');
+  // 'merchant' | 'retailer' | 'startup'
+  const [initialBusinessRole, setInitialBusinessRole] = useState('merchant');
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('maison_theme') === 'dark';
@@ -494,8 +473,10 @@ export default function App() {
   }, [darkMode]);
 
   const handleNavigateSection = (sectionId) => {
+    // Logged-in users: the name button goes to their own landing page
+    // (business dashboard for business users, Home for shoppers).
     if (sectionId === 'home' && currentUser) {
-      setCurrentPage('home');
+      setCurrentPage(getLandingPage(currentUser));
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -533,20 +514,18 @@ export default function App() {
     }
   };
 
-  const handleOpenShopperRegister = () => {
-    setCurrentPage('shopping-register');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+  
   const handleOpenBusinessRegister = (role = 'merchant') => {
     setInitialBusinessRole(role);
     setCurrentPage('business-register');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // After login: business users go to the dashboard that matches their role,
+  // shoppers go to Home.
   const handleLoginSuccess = (userData) => {
     setCurrentUser(userData);
-    setCurrentPage('home');
+    setCurrentPage(getLandingPage(userData));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -557,6 +536,19 @@ export default function App() {
     setCurrentPage('intro');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Business dashboards use their own full-screen layout (sidebar + header),
+  // so they are rendered without the MAISON navbar.
+  const Dashboard = DASHBOARD_BY_ROLE[currentUser?.role];
+
+  {currentPage === 'dashboard' && Dashboard && (
+    <Dashboard
+      user={currentUser}
+      onLogout={handleLogout}
+      darkMode={darkMode}
+      onToggleDark={() => setDarkMode(prev => !prev)}
+    />
+  )}
 
   return (
     <div
@@ -569,7 +561,7 @@ export default function App() {
         onToggleDark={() => setDarkMode(!darkMode)}
         onNavigateSection={handleNavigateSection}
         onOpenLoginStream={handleOpenLoginStream}
-        onOpenShopperRegister={handleOpenShopperRegister}
+      
         onOpenBusinessRegister={handleOpenBusinessRegister}
         currentUser={currentUser}
         onLogout={handleLogout}
@@ -580,24 +572,19 @@ export default function App() {
           <IntroLogin
             loginStream={loginStream}
             setLoginStream={setLoginStream}
-            onOpenShopperRegister={handleOpenShopperRegister}
+          
             onOpenBusinessRegister={handleOpenBusinessRegister}
             onLoginSuccess={handleLoginSuccess}
           />
         )}
 
-        {currentPage === 'shopping-register' && (
-          <ShoppingRegister
-            onOpenShopperLogin={() => handleOpenLoginStream('shopper')}
-            onOpenBusinessRegister={() => handleOpenBusinessRegister('merchant')}
-          />
-        )}
+        
 
         {currentPage === 'business-register' && (
           <BusinessRegister
             initialRole={initialBusinessRole}
             onOpenBusinessLogin={() => handleOpenLoginStream('business')}
-            onOpenShopperRegister={handleOpenShopperRegister}
+            
           />
         )}
 
