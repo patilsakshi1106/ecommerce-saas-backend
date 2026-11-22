@@ -201,7 +201,7 @@ export default function IntroLogin({
 
     setIsSubmitting(true);
     try {
-      const response = await authService.login(loginStream, { email, password });
+      const response = await authService.login('business', { email, password });
       setPassword('');
       if (onLoginSuccess) {
         onLoginSuccess(response.data);

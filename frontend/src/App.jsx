@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import IntroLogin from './pages/IntroLogin.jsx';
-import BusinessRegister from './pages/BusinessRegister.jsx';
-import MerchantDashboard from './pages/MerchantDashboard.jsx';
-import RetailerDashboard from './pages/RetailerDashboard.jsx';
-import StartupDashboard from './pages/StartupDashboard.jsx';
+import BusinessRegister from '../src/pages/BusinessRegister.jsx';
+import MerchantDashboard from '../src/pages/MerchantDashboard.jsx';
+import RetailerDashboard from '../src/pages/RetailerDashboard.jsx';
+import StartupDashboard from '../src/pages/StartupDashboard.jsx';
 import Home from './Home.jsx';
 
 export const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
@@ -447,7 +447,7 @@ export default function App() {
   // 'intro' | 'shopping-register' | 'business-register' | 'home' | 'dashboard'
   const [currentPage, setCurrentPage] = useState(() => getLandingPage(currentUser));
   // 'shopper' | 'business'
-  const [loginStream, setLoginStream] = useState('shopper');
+  const [loginStream, setLoginStream] = useState('business');
   // 'merchant' | 'retailer' | 'startup'
   const [initialBusinessRole, setInitialBusinessRole] = useState('merchant');
 
@@ -539,16 +539,20 @@ export default function App() {
 
   // Business dashboards use their own full-screen layout (sidebar + header),
   // so they are rendered without the MAISON navbar.
-  const Dashboard = DASHBOARD_BY_ROLE[currentUser?.role];
+  const Dashboard = DASHBOARD_BY_ROLE[currentUser?.role?.toLowerCase()];
 
-  {currentPage === 'dashboard' && Dashboard && (
-    <Dashboard
-      user={currentUser}
-      onLogout={handleLogout}
-      darkMode={darkMode}
-      onToggleDark={() => setDarkMode(prev => !prev)}
-    />
-  )}
+  if (currentPage === 'dashboard' && Dashboard) {
+    return (
+      <Dashboard
+        user={currentUser}
+        onLogout={handleLogout}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode((prev) => !prev)}
+      />
+    );
+  }
+
+
 
   return (
     <div

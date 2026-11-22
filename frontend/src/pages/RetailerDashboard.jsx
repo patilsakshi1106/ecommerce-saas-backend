@@ -22,7 +22,7 @@ import {
   Share2,
   CheckCircle2,
   Heart,
-  Filter
+  Filter, 
 } from 'lucide-react';
 
 // DEMO DATA (CLEARLY LABELLED FOR FRONTEND PREVIEW)
